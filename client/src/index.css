@@ -18,6 +18,7 @@ a {
   color: #646cff;
   text-decoration: inherit;
 }
+
 a:hover {
   color: #535bf2;
 }
@@ -65,4 +66,69 @@ button:focus-visible {
   button {
     background-color: #f9f9f9;
   }
+}
+
+.lecture-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 40px;
+}
+
+.lecture-layout {
+  display: flex;
+  gap: 40px;
+}
+
+/* LEFT SIDE */
+.lecture-left {
+  width: 40%;
+}
+
+/* RIGHT SIDE */
+.lecture-right {
+  width: 60%;
+}
+
+/* Video box */
+.video-box {
+  height: 200px;
+  background: #eee;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: black;
+  font-weight: 500;
+}
+
+/* Transcript box */
+.transcript-box {
+  height: 150px;
+  background: #eee;
+  padding: 10px;
+  margin-bottom: 20px;
+  color: black;
+}
+
+/* Editor area */
+.lecture-right .monaco-editor {
+  border: 1px solid #ccc;
+}
+
+/* Output */
+.output-box {
+  background: black;
+  color: #00ff00;
+  padding: 15px;
+  margin-top: 10px;
+  font-family: monospace;
+  white-space: pre-wrap;
+}
+
+/* Buttons */
+.nav-buttons {
+  margin-top: 10px;
+}
+
+.nav-buttons button {
+  margin-right: 10px;
 }
