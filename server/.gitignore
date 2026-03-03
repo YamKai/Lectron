@@ -16,7 +16,6 @@ dist-ssr/
 
 # Environment variables
 .env
-.env.*
 
 # Local configs
 *.local
@@ -36,3 +35,7 @@ Thumbs.db
 *.njsproj
 *.sln
 *.sw?
+
+
+temp/
+build/
