@@ -1,75 +1,97 @@
-import { useParams, useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useParams } from "react-router-dom";
+import { useState, useEffect } from "react";
 import CodeEditor from "../components/CodeEditor";
+import { getLecture } from "../api/lecture";
 
 function LecturePage() {
   const { lectureId } = useParams();
+
+  const [lecture, setLecture] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [output, setOutput] = useState("");
 
+  useEffect(() => {
+    const fetchLecture = async () => {
+      try {
+        const data = await getLecture(lectureId);
+        setLecture(data);
+      } catch (err) {
+        console.error("Failed to load lecture:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchLecture();
+  }, [lectureId]);
+
   const handleRun = (code) => {
-  let logs = [];
+    let logs = [];
+    const originalLog = console.log;
 
-  const originalLog = console.log;
+    console.log = (...args) => {
+      logs.push(args.join(" "));
+    };
 
-  console.log = (...args) => {
-    logs.push(args.join(" "));
+    try {
+      eval(code);
+      setOutput(logs.join("\n"));
+    } catch (err) {
+      setOutput("Error: " + err.message);
+    }
+
+    console.log = originalLog;
   };
 
-  try {
-    eval(code);
-    setOutput(logs.join("\n"));
-  } catch (err) {
-    setOutput("Error: " + err.message);
-  }
+  if (loading) return <div>Loading...</div>;
+  if (!lecture) return <div>Lecture not found</div>;
 
-  console.log = originalLog;};
+  return (
+    <div className="lecture-container">
+      <div className="lecture-left">
 
- return (
-  <div className="lecture-container">
+        <h1>{lecture.lecture_name}</h1>
 
-    {/* LEFT SIDE */}
-    <div className="lecture-left">
+        <section>
+          <h2>Video Section</h2>
+          <div className="video-box">
+            {lecture.video_url ? (
+              <iframe
+                src={lecture.video_url}
+                title="Lecture Video"
+                width="100%"
+                height="300"
+                allowFullScreen
+              />
+            ) : (
+              "No video available"
+            )}
+          </div>
+        </section>
 
-      <h1>Lecture {lectureId}</h1>
+        <section>
+          <h2>Transcript Section</h2>
+          <div className="transcript-box">
+            {lecture.transcript}
+          </div>
+        </section>
 
-      <section>
-        <h2>Video Section</h2>
-        <div className="video-box">
-          Video Placeholder
-        </div>
-      </section>
-
-      <section>
-        <h2>Transcript Section</h2>
-        <div className="transcript-box">
-          This is where the transcript will go.
-        </div>
-      </section>
-
-      <div className="nav-buttons">
-        <button>Previous</button>
-        <button>Next</button>
       </div>
 
+      <div className="lecture-right">
+
+        <h2>Editor Section</h2>
+
+        <CodeEditor onRun={handleRun} />
+
+        <h3>Output</h3>
+        <div className="output-box">
+          {output}
+        </div>
+
+      </div>
     </div>
-
-
-    {/* RIGHT SIDE */}
-    <div className="lecture-right">
-
-      <h2>Editor Section</h2>
-
-      <CodeEditor onRun={handleRun} />
-
-      <h3>Output</h3>
-<div className="output-box">
-  {output}
-</div>
-
-    </div>
-
-  </div>
-);
+  );
 }
 
 export default LecturePage;
