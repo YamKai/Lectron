@@ -68,67 +68,64 @@ button:focus-visible {
   }
 }
 
-.lecture-container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 40px;
-}
-
-.lecture-layout {
-  display: flex;
-  gap: 40px;
+/* LECTURE PAGE LAYOUT */
+.lecture-container{
+  display:flex;
+  justify-content:center;
+  gap:60px;
+  padding:40px;
 }
 
 /* LEFT SIDE */
-.lecture-left {
-  width: 40%;
+.lecture-left{
+  width:320px;
+}
+
+.video-box{
+  height:180px;
+  background:#e5e5e5;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:black;
+  font-weight:500;
+  border-radius:8px;
+  margin-bottom:20px;
+}
+
+.transcript-box{
+  height:150px;
+  background:#e5e5e5;
+  padding:10px;
+  color:black;
+  border-radius:8px;
 }
 
 /* RIGHT SIDE */
-.lecture-right {
-  width: 60%;
+.lecture-right{
+  width:600px;
 }
 
-/* Video box */
-.video-box {
-  height: 200px;
-  background: #eee;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: black;
-  font-weight: 500;
+.lecture-right .monaco-editor{
+  border:1px solid #ccc;
 }
 
-/* Transcript box */
-.transcript-box {
-  height: 150px;
-  background: #eee;
-  padding: 10px;
-  margin-bottom: 20px;
-  color: black;
-}
-
-/* Editor area */
-.lecture-right .monaco-editor {
-  border: 1px solid #ccc;
-}
-
-/* Output */
+/* OUTPUT TERMINAL STYLE */
 .output-box {
-  background: black;
-  color: #00ff00;
+  background: #0f172a;
+  color: #22c55e;
   padding: 15px;
-  margin-top: 10px;
+  margin-top: 15px;
   font-family: monospace;
   white-space: pre-wrap;
+  border-radius: 6px;
 }
 
-/* Buttons */
-.nav-buttons {
-  margin-top: 10px;
+/* NAV BUTTONS */
+.nav-buttons{
+  margin-top:15px;
 }
 
-.nav-buttons button {
-  margin-right: 10px;
+.nav-buttons button{
+  margin-right:10px;
 }
