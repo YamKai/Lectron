@@ -10,6 +10,7 @@ const enrollmentRouter = require('./routes/data/enrollment');
 const examRouter = require('./routes/data/exam');
 const userRouter = require('./routes/data/user');
 const lectureSessionRouter = require('./routes/data/lecture_session');
+const taskRouter = require('./routes/data/task');
 const {requestLogger} = require('./middleware/requestLogger');
 const {errorHandler} = require('./middleware/errorHandler');
 
@@ -27,6 +28,7 @@ app.use('/api/enrollments', enrollmentRouter);
 app.use('/api/exams', examRouter);
 app.use('/api/users', userRouter);
 app.use('/api/lecture-sessions', lectureSessionRouter);
+app.use('/api/tasks', taskRouter);
 app.get('/health', (_req, res) => res.json({ status: 'ok', timestamp: new Date().toISOString() }));
 app.use((_req, res) => res.status(404).json({ error: 'Route not found' }));
 app.use(errorHandler);

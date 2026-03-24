@@ -118,6 +118,7 @@ router.delete('/:id', async (req, res) => {
     res.status(500).json({ error: 'Server error' });
   }
 });
+  router.supabase = supabase;
   return router;
 }
 
