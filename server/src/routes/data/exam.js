@@ -1,6 +1,6 @@
 const createCrudRouter = require('../../controllers/crud_controller');
 
 module.exports = createCrudRouter({
-  entity: 'Course',
-  uuid: 'course_id'
+  entity: 'Exam',
+  uuid: 'exam_id'
 });

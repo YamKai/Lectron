@@ -6,6 +6,10 @@ require('dotenv').config();
 const executeRouter = require('./routes/execute');
 const lectureRouter = require('./routes/data/lecture');
 const courseRouter = require('./routes/data/course');
+const enrollmentRouter = require('./routes/data/enrollment');
+const examRouter = require('./routes/data/exam');
+const userRouter = require('./routes/data/user');
+const lectureSessionRouter = require('./routes/data/lecture_session');
 const {requestLogger} = require('./middleware/requestLogger');
 const {errorHandler} = require('./middleware/errorHandler');
 
@@ -19,8 +23,12 @@ app.use('/api', rateLimit({ windowMs: 60_000, max: 60, standardHeaders: true, le
 app.use('/api/execute', executeRouter);
 app.use('/api/lectures', lectureRouter);
 app.use('/api/courses', courseRouter);
+app.use('/api/enrollments', enrollmentRouter);
+app.use('/api/exams', examRouter);
+app.use('/api/users', userRouter);
+app.use('/api/lecture-sessions', lectureSessionRouter);
 app.get('/health', (_req, res) => res.json({ status: 'ok', timestamp: new Date().toISOString() }));
-app.use((_req, res) => res.status(404).json({ error: 'Rroute not found' }));
+app.use((_req, res) => res.status(404).json({ error: 'Route not found' }));
 app.use(errorHandler);
 
 module.exports = app;
