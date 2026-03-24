@@ -1,7 +1,7 @@
 import { useParams } from "react-router-dom";
 import { useState, useEffect } from "react";
 import CodeEditor from "../components/CodeEditor";
-import { getLecture } from "../api/lecture";
+import { lecturesApi } from "../api/data/lecture";
 
 function LecturePage() {
   const { lectureId } = useParams();
@@ -13,7 +13,7 @@ function LecturePage() {
   useEffect(() => {
     const fetchLecture = async () => {
       try {
-        const data = await getLecture(lectureId);
+        const data = await lecturesApi.get(lectureId);
         setLecture(data);
       } catch (err) {
         console.error("Failed to load lecture:", err);
