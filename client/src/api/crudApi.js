@@ -3,7 +3,8 @@ export function createCrudApi(baseUrl) {
 
   return {
     get: async (id) => {
-      const res = await fetch(`${baseUrl}/${id}`);
+      const url = id === "all" ? baseUrl : `${baseUrl}/${id}`;
+      const res = await fetch(url);
       if (!res.ok) throw new Error(`GET request failed: ${res.status}`);
       return res.json();
     },

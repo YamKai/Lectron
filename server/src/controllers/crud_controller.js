@@ -3,6 +3,25 @@ function createCrudRouter({ entity, uuid }) {
   const supabase = require('../supabaseClient');
   const express = require('express');
   const router = express.Router();
+
+  router.get('/', async (req, res) => {
+    try {
+      const { data, error } = await supabase
+        .from(entity)
+        .select('*');
+
+      if (error) {
+        console.error('Supabase GET error:', error);
+        return res.status(500).json({ error: error.message });
+      }
+
+      res.json(data);
+    } catch (err) {
+      console.error('Server GET error:', err);
+      res.status(500).json({ error: 'Server error' });
+    }
+  });
+
   router.get('/:id', async (req, res) => {
   try {
     const { id } = req.params;
