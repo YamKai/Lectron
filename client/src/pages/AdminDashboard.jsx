@@ -58,7 +58,7 @@ export default function AdminDashboard() {
     <div style={app}>
       {/* TOP BAR */}
       <div style={topBar}>
-        <h3 style={{ margin: 0 }}>Lectron Admin</h3>
+        <h3 style={{ margin: 0 }}>Lectron</h3>
 
         {/* ADMIN BUTTON */}
         <div style={{ position: "relative", marginRight: 30 }}>
