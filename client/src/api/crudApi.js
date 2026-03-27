@@ -21,7 +21,7 @@ export function createCrudApi(baseUrl) {
 
     update: async (id, data) => {
       const res = await fetch(`${baseUrl}/${id}`, {
-        method: 'PATCH', // PATCH is safer for partial updates
+        method: 'PATCH',
         headers,
         body: JSON.stringify(data),
       });
