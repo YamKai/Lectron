@@ -1,154 +1,214 @@
 import { useEffect, useState } from "react";
+import { coursesApi } from "../api/data/course";
+import { lecturesApi } from "../api/data/lecture";
 
 export default function AdminDashboard() {
-  const [page, setPage] = useState("courses");
   const [courses, setCourses] = useState([]);
-  const [activity, setActivity] = useState([]);
-  const [selectedCourse, setSelectedCourse] = useState(null);
-  const [showForm, setShowForm] = useState(false);
+  const [lectures, setLectures] = useState([]);
 
-  const [open, setOpen] = useState(false);
-  const [role, setRole] = useState("Admin");
+  const [selectedCourse, setSelectedCourse] = useState(null);
+  const [selectedLecture, setSelectedLecture] = useState(null);
+
+  const [view, setView] = useState("none");
 
   const [form, setForm] = useState({
     course_name: "",
     course_description: "",
+    title: "",
+    content: "",
   });
 
-  /* FETCH COURSES */
+
+  const loadCourses = async () => {
+    const data = await coursesApi.get("all");
+    setCourses(data?.data || data || []);
+  };
+
+  const loadLectures = async (courseId) => {
+    const data = await lecturesApi.get("all");
+    const list = data?.data || data || [];
+
+    setLectures(
+      list.filter((l) => String(l.course_id) === String(courseId))
+    );
+  };
+
   useEffect(() => {
-    fetch("http://localhost:3001/api/courses")
-      .then((res) => res.json())
-      .then((data) => setCourses(data?.data || data || []))
-      .catch(() => setCourses([]));
+    loadCourses();
   }, []);
 
-  /* FETCH ACTIVITY */
-  useEffect(() => {
-    fetch("http://localhost:3001/api/activity")
-      .then((res) => res.json())
-      .then((data) => {
-        const safe = data?.data || data || [];
-        setActivity(Array.isArray(safe) ? safe : []);
-      })
-      .catch(() => setActivity([]));
-  }, []);
+  /* COURSE */
 
-  const handleSelect = (course) => {
-    if (role !== "Admin") return;
+  const handleSelectCourse = async (course) => {
     setSelectedCourse(course);
-    setShowForm(true);
+    setSelectedLecture(null);
+    setView("course");
+
     setForm({
       course_name: course.course_name,
       course_description: course.course_description,
+      title: "",
+      content: "",
     });
+
+    await loadLectures(course.course_id);
   };
 
-  const handleAdd = () => {
-    if (role !== "Admin") return;
+  const handleAddCourse = () => {
     setSelectedCourse(null);
-    setShowForm(true);
+    setSelectedLecture(null);
+    setView("course");
+
     setForm({
       course_name: "",
       course_description: "",
+      title: "",
+      content: "",
+    });
+
+    setLectures([]);
+  };
+
+  const handleSaveCourse = async () => {
+    if (!form.course_name.trim()) {
+      alert("Course name required");
+      return;
+    }
+
+    try {
+      if (selectedCourse) {
+        await coursesApi.update(selectedCourse.course_id, {
+          course_name: form.course_name,
+          course_description: form.course_description,
+        });
+      } else {
+        await coursesApi.create({
+          course_name: form.course_name,
+          course_description: form.course_description,
+        });
+      }
+
+      await loadCourses();
+
+      setView("none");
+      setSelectedCourse(null);
+      setForm({
+        course_name: "",
+        course_description: "",
+        title: "",
+        content: "",
+      });
+
+    } catch (err) {
+      console.error(err);
+      alert("Failed to save course");
+    }
+  };
+
+  const handleDeleteCourse = async () => {
+    if (!window.confirm("Delete this course?")) return;
+
+    await coursesApi.delete(selectedCourse.course_id);
+    await loadCourses();
+
+    setView("none");
+    setSelectedCourse(null);
+  };
+
+  /* LECTURE */
+
+  const handleOpenLecture = (lecture) => {
+    setSelectedLecture(lecture);
+    setView("lecture");
+
+    setForm({
+      ...form,
+      title: lecture.lecture_name,
+      content: lecture.lecture_description,
     });
   };
 
+  const handleAddLecture = async () => {
+    if (!form.title.trim()) {
+      alert("Lecture title required");
+      return;
+    }
+
+    await lecturesApi.create({
+      lecture_name: form.title,
+      lecture_description: form.content,
+      transcript: "",
+      video_url: "",
+      evaluation: "",
+      course_id: selectedCourse.course_id,
+    });
+
+    await loadLectures(selectedCourse.course_id);
+
+    setForm({
+      ...form,
+      title: "",
+      content: "",
+    });
+  };
+
+  const handleUpdateLecture = async () => {
+    await lecturesApi.update(selectedLecture.lecture_id, {
+      lecture_name: form.title,
+      lecture_description: form.content,
+    });
+
+    await loadLectures(selectedCourse.course_id);
+  };
+
+  const handleDeleteLecture = async () => {
+    if (!window.confirm("Delete this lecture?")) return;
+
+    try {
+      await lecturesApi.delete(selectedLecture.lecture_id);
+
+      await loadLectures(selectedCourse.course_id);
+
+      setView("course");
+      setSelectedLecture(null);
+    } catch (err) {
+      console.error(err);
+      alert("Failed to delete lecture");
+    }
+  };
+
+  /* UI */
+
   return (
     <div style={app}>
-      {/* TOP BAR */}
-      <div style={topBar}>
-        <h3 style={{ margin: 0 }}>Lectron Admin</h3>
-
-        {/* ADMIN BUTTON */}
-        <div style={{ position: "relative", marginRight: 30 }}>
-          <div style={userBtn} onClick={() => setOpen(!open)}>
-            {role} ▾
-          </div>
-
-          {open && (
-            <div style={dropdown}>
-              <div
-                style={dropdownItem}
-                onClick={() => {
-                  setRole("Admin");
-                  setOpen(false);
-                }}
-              >
-                Admin
-              </div>
-
-              <div
-                style={dropdownItem}
-                onClick={() => {
-                  setRole("User");
-                  setOpen(false);
-                }}
-              >
-                User
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-
       <div style={layout}>
-        {/* SIDEBAR */}
         <div style={sidebar}>
-          <button
-            style={page === "courses" ? active : item}
-            onClick={() => setPage("courses")}
-          >
-            Courses
-          </button>
+          <h2>Courses</h2>
 
-          <button
-            style={page === "analytics" ? active : item}
-            onClick={() => setPage("analytics")}
-          >
-            Analytics
-          </button>
+          {courses.map((c) => (
+            <div
+              key={c.course_id}
+              style={{
+                ...card,
+                ...(selectedCourse?.course_id === c.course_id && activeCard),
+              }}
+              onClick={() => handleSelectCourse(c)}
+            >
+              {c.course_name}
+            </div>
+          ))}
 
-          <button
-            style={page === "activity" ? active : item}
-            onClick={() => setPage("activity")}
-          >
-            Activity
-          </button>
+          <div style={addCard} onClick={handleAddCourse}>
+            + Add Course
+          </div>
         </div>
 
-        {/* MAIN */}
-        <div style={main}>
-          {/* COURSES */}
-          {page === "courses" && (
-            <div style={coursesLayout}>
-              <div>
-                <h2>Courses</h2>
-
-                <div style={grid}>
-                  {courses.map((c) => (
-                    <div
-                      key={c.course_id}
-                      style={card}
-                      onClick={() => handleSelect(c)}
-                    >
-                      {c.course_name}
-                    </div>
-                  ))}
-
-                  {role === "Admin" && (
-                    <div style={addCard} onClick={handleAdd}>
-                      +
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {showForm && role === "Admin" && (
-                <div style={formBox}>
-                  <h2>
-                    {selectedCourse ? "Edit Course" : "Create Course"}
-                  </h2>
+        <div style={panel}>
+          {view !== "none" && (
+            <div style={fullForm}>
+              {view === "course" && (
+                <>
+                  <h2>{selectedCourse ? "Edit Course" : "Add Course"}</h2>
 
                   <input
                     value={form.course_name}
@@ -168,47 +228,125 @@ export default function AdminDashboard() {
                       })
                     }
                     placeholder="Description"
+                    style={textareaSmall}
+                  />
+
+                  {selectedCourse && (
+                    <>
+                      <h4>Lectures</h4>
+
+                      {lectures.map((l) => (
+                        <div
+                          key={l.lecture_id}
+                          style={{
+                            ...lectureItem,
+                            ...(selectedLecture?.lecture_id ===
+                              l.lecture_id && activeLecture),
+                          }}
+                          onClick={() => handleOpenLecture(l)}
+                        >
+                          {l.lecture_name}
+                        </div>
+                      ))}
+
+                      <button
+                        style={button}
+                        onClick={() => {
+                          setView("lecture");
+                          setSelectedLecture(null);
+                          setForm({
+                            ...form,
+                            title: "",
+                            content: "",
+                          });
+                        }}
+                      >
+                        + Add Lecture
+                      </button>
+                    </>
+                  )}
+
+                  <div style={actionsRow}>
+                    <button style={backBtn} onClick={() => setView("none")}>
+                      Back
+                    </button>
+
+                    <div style={rightActions}>
+                      <button style={button} onClick={handleSaveCourse}>
+                        {selectedCourse ? "Update" : "Add"}
+                      </button>
+
+                      {selectedCourse && (
+                        <button
+                          style={deleteBtn}
+                          onClick={handleDeleteCourse}
+                        >
+                          Delete
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {view === "lecture" && (
+                <>
+                  <h2>
+                    {selectedLecture ? "Edit Lecture" : "Add Lecture"}
+                  </h2>
+
+                  <input
+                    value={form.title}
+                    onChange={(e) =>
+                      setForm({ ...form, title: e.target.value })
+                    }
+                    placeholder="Lecture Title"
+                    style={input}
+                  />
+
+                  <textarea
+                    value={form.content}
+                    onChange={(e) =>
+                      setForm({ ...form, content: e.target.value })
+                    }
+                    placeholder="Content"
                     style={textarea}
                   />
 
-                  <button style={button}>Save</button>
-                </div>
-              )}
-            </div>
-          )}
+                  <div style={actionsRow}>
+                    <button
+                      style={backBtn}
+                      onClick={() => setView("course")}
+                    >
+                      Back
+                    </button>
 
-          {/* ANALYTICS */}
-          {page === "analytics" && (
-            <div>
-              <h2>Analytics</h2>
+                    <div style={rightActions}>
+                      {!selectedLecture && (
+                        <button style={button} onClick={handleAddLecture}>
+                          Add
+                        </button>
+                      )}
 
-              <div style={gridStats}>
-                <div style={statCard}>Courses: {courses.length}</div>
-                <div style={statCard}>Users: 45</div>
-                <div style={statCard}>Enrollments: 120</div>
-              </div>
-            </div>
-          )}
-
-          {/* ACTIVITY */}
-          {page === "activity" && (
-            <div>
-              <h2>User Activity</h2>
-
-              {activity.length === 0 ? (
-                <p style={{ color: "#777" }}>No activity</p>
-              ) : (
-                activity.map((a, i) => (
-                  <div key={i} style={activityCard}>
-                    <div>
-                      <b>{a.user || "User"}</b>
-                      <div style={{ color: "#aaa", fontSize: 14 }}>
-                        {a.action || "No action"}
-                      </div>
+                      {selectedLecture && (
+                        <>
+                          <button
+                            style={button}
+                            onClick={handleUpdateLecture}
+                          >
+                            Update
+                          </button>
+                          <button
+                            style={deleteBtn}
+                            onClick={handleDeleteLecture}
+                          >
+                            Delete
+                          </button>
+                        </>
+                      )}
                     </div>
-                    <small>{a.time || ""}</small>
                   </div>
-                ))
+                </>
               )}
             </div>
           )}
@@ -218,97 +356,60 @@ export default function AdminDashboard() {
   );
 }
 
-/* STYLES  */
+/* STYLES */
 
 const app = {
   height: "100vh",
   width: "100vw",
   background: "#0b0f14",
-  color: "#e6edf3",
-};
-
-const topBar = {
-  position: "fixed",
-  top: 0,
-  left: 0,
-  width: "100%",
-  height: 60,
-  background: "#0f141a",
-  display: "flex",
-  justifyContent: "space-between",
-  alignItems: "center",
-  padding: "0 24px",
-};
-
-const layout = {
-  display: "grid",
-  gridTemplateColumns: "220px 1fr",
-  marginTop: 60,
-  height: "calc(100vh - 60px)",
-};
-
-const sidebar = {
-  background: "#0a0d11",
-  padding: 20,
-  display: "flex",
-  flexDirection: "column",
-};
-
-const main = {
-  padding: 40,
-};
-
-const item = {
-  padding: "10px",
-  color: "#9aa4af",
-  background: "transparent",
-  border: "none",
-  cursor: "pointer",
-};
-
-const active = {
-  ...item,
-  background: "#11161c",
   color: "#fff",
 };
 
-const userBtn = {
-  padding: "6px 14px",
-  background: "#11161c",
-  borderRadius: 8,
-  cursor: "pointer",
+const layout = {
+  display: "flex",
+  height: "100vh",
+  width: "100%",
 };
 
-const dropdown = {
-  position: "absolute",
-  top: "110%",
-  right: 0,
-  background: "#11161c",
-  borderRadius: 8,
-  width: 120,
+const sidebar = {
+  width: 260,
+  padding: 20,
+  background: "#0a0f14",
+  borderRight: "1px solid #1f2937",
 };
 
-const dropdownItem = {
-  padding: 10,
-  cursor: "pointer",
+const panel = {
+  flex: 1,
+  padding: 40,
+  background: "#0b0f14",
 };
 
-const coursesLayout = {
-  display: "grid",
-  gridTemplateColumns: "320px 480px",
-  gap: 40,
-};
-
-const grid = {
-  display: "grid",
-  gap: 10,
+const fullForm = {
+  width: "100%",
 };
 
 const card = {
+  padding: 14,
   background: "#11161c",
-  padding: 20,
   borderRadius: 10,
+  marginBottom: 10,
   cursor: "pointer",
+};
+
+const activeCard = {
+  border: "1px solid #3b82f6",
+};
+
+const lectureItem = {
+  padding: 10,
+  background: "#11161c",
+  borderRadius: 8,
+  marginTop: 8,
+  cursor: "pointer",
+};
+
+const activeLecture = {
+  border: "1px solid #3b82f6",
 };
 
 const addCard = {
@@ -317,45 +418,43 @@ const addCard = {
   textAlign: "center",
 };
 
-const formBox = {
-  background: "#0f141a",
-  padding: 20,
-  borderRadius: 12,
-};
-
 const input = {
   width: "100%",
-  marginTop: 10,
   padding: 10,
+  marginTop: 10,
+  background: "#11161c",
+  color: "#fff",
+  border: "1px solid #1f2937",
 };
 
-const textarea = {
-  ...input,
-  height: 120,
-};
+const textareaSmall = { ...input, height: 80 };
+const textarea = { ...input, height: 150 };
 
 const button = {
-  marginTop: 15,
-  padding: 10,
+  padding: "8px 14px",
   background: "#3b82f6",
   border: "none",
   color: "#fff",
+  borderRadius: 6,
 };
 
-const gridStats = {
-  display: "flex",
-  gap: 20,
+const deleteBtn = {
+  ...button,
+  background: "#ef4444",
 };
 
-const statCard = {
-  background: "#11161c",
-  padding: 20,
+const backBtn = {
+  ...button,
+  background: "#1f2937",
 };
 
-const activityCard = {
-  background: "#11161c",
-  padding: 15,
-  marginTop: 10,
+const actionsRow = {
+  marginTop: 20,
   display: "flex",
   justifyContent: "space-between",
+};
+
+const rightActions = {
+  display: "flex",
+  gap: 10,
 };
