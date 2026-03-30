@@ -3,6 +3,7 @@ import { useAuth } from "./context/AuthContext";
 import LandingPage from "./pages/LandingPage";
 import AdminDashboard from "./pages/AdminDashboard";
 import Layout from "./pages/Layout";
+import { signInWithGoogle } from "./auth";
 function App() {
   const { authUser, dbUser, loading } = useAuth();
 
@@ -14,7 +15,7 @@ function App() {
         <Route
           path="/"
           element={
-            authUser ? <Navigate to="/testadmindash" /> : <LandingPage />
+            authUser ? <Navigate to="/testadmindash" /> : <LandingPage onLogin={signInWithGoogle} />
           }
         />
         <Route element={<Layout />}>

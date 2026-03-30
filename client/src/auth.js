@@ -7,7 +7,11 @@ export const signInWithGoogle = async () => {
 };
 
 export const signOut = async () => {
-    return supabase.auth.signOut();
+  const { error } = await supabase.auth.signOut();
+
+  if (error) throw error;
+
+  await supabase.auth.getSession();
 };
 
 export const getCurrentUser = () => {

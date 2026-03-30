@@ -1,13 +1,17 @@
 import { useAuth } from "../context/AuthContext";
+import { signOut } from "../auth";
 
 function NavBar() {
-  const { dbUser } = useAuth();
+    const { dbUser } = useAuth();
+    const handleSignOut = async () => {
+        await signOut();
+    };
 
+  
   return (
     <>
       <nav style={styles.navbar}>
         <img src="/Logo.png" alt="logo" style={styles.logo} />
-
         <div style={styles.userSection}>
           <img
             src={dbUser?.avatar_url}
@@ -18,6 +22,9 @@ function NavBar() {
           <span style={styles.username}>
             {dbUser?.user_name}
           </span>
+          <button onClick={handleSignOut} style={styles.button}>
+          Sign out
+        </button>
         </div>
       </nav>
     </>
@@ -71,4 +78,14 @@ const styles = {
     fontSize: "14px",
     fontWeight: "500",
   },
+
+  button: {
+    backgroundColor: "#ef4444",
+    border: "none",
+    color: "white",
+    padding: "3px 5px",
+    borderRadius: "6px",
+    cursor: "pointer",
+    fontSize: "12px",
+}
 };
