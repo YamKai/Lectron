@@ -19,6 +19,16 @@ export function createCrudApi(baseUrl) {
       return res.json();
     },
 
+    upsert: async (data) => {
+      const res = await fetch(baseUrl, {
+        method: 'PUT',
+        headers,
+        body: JSON.stringify(data),
+      });
+      if (!res.ok) throw new Error(`PUT(Upsert) request failed: ${res.status}`);
+      return res.json();
+    },
+
     update: async (id, data) => {
       const res = await fetch(`${baseUrl}/${id}`, {
         method: 'PATCH',

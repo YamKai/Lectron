@@ -1,17 +1,32 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import LecturePage from "./pages/LecturePage";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { useAuth } from "./context/AuthContext";
+import LandingPage from "./pages/LandingPage";
 import AdminDashboard from "./pages/AdminDashboard";
-
+import Layout from "./pages/Layout";
 function App() {
+  const { authUser, dbUser, loading } = useAuth();
+
+  if (loading) return <div>Loading...</div>;
+
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<h1>Lectron Home</h1>} />
-        <Route path="/testlectureroute/:lectureId" element={<LecturePage />} />
-        <Route path="/testadmindash" element={<AdminDashboard />} />
+        <Route
+          path="/"
+          element={
+            authUser ? <Navigate to="/testadmindash" /> : <LandingPage />
+          }
+        />
+        <Route element={<Layout />}>
+        <Route
+          path="/testadmindash"
+          element={
+            authUser ? <AdminDashboard /> : <Navigate to="/" />
+          }
+        />
+        </Route>
       </Routes>
     </BrowserRouter>
   );
 }
-
 export default App;

@@ -361,7 +361,7 @@ export default function AdminDashboard() {
 const app = {
   height: "100vh",
   width: "100vw",
-  background: "#0b0f14",
+  background: "#040316",
   color: "#fff",
 };
 

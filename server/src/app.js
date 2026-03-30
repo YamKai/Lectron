@@ -17,7 +17,7 @@ const {errorHandler} = require('./middleware/errorHandler');
 const app = express();
 
 app.use(helmet());
-app.use(cors({ origin: process.env.CORS_ORIGIN || 'http://localhost:5173', methods: ['GET', 'POST', 'PATCH', 'DELETE'] }));
+app.use(cors({ origin: process.env.CORS_ORIGIN || 'http://localhost:5173', methods: ['GET', 'POST', 'PATCH', 'DELETE', 'PUT'] }));
 app.use(express.json({ limit: '50kb' }));
 app.use(requestLogger);
 app.use('/api', rateLimit({ windowMs: 60_000, max: 60, standardHeaders: true, legacyHeaders: false }));
