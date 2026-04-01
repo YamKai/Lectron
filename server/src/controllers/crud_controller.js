@@ -74,6 +74,29 @@ router.post('/', async (req, res) => {
   }
 });
 
+router.put('/', async (req, res) => {
+  try {
+    const putData = req.body;
+
+    const { data, error } = await supabase
+      .from(entity)
+      .upsert(putData)
+      .select()
+      .maybeSingle();
+
+    if (error) {
+      console.error('Supabase PUT error:', error);
+      return res.status(500).json({ error: error.message });
+    }
+
+    return res.status(200).json(data);
+
+  } catch (err) {
+    console.error('Server PUT error:', err);
+    return res.status(500).json({ error: 'Server error' });
+  }
+});
+
 router.patch('/:id', async (req, res) => {
   try {
     const { id } = req.params;
