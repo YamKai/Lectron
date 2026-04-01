@@ -30,7 +30,7 @@ function App() {
         <Route
             path="/testmaindash"
             element={
-              authUser ? <MainDashboard /> : <Navigate to="/" />
+              dbUser ? <MainDashboard /> : <Navigate to="/" />
             }
           />
         </Route>
