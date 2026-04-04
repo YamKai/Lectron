@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useAuth } from "./context/AuthContext";
 import LandingPage from "./pages/LandingPage";
 import AdminDashboard from "./pages/AdminDashboard";
+import MainDashboard from "./pages/MainDashboard";
 import Layout from "./pages/Layout";
 import { signInWithGoogle } from "./auth";
 function App() {
@@ -25,6 +26,13 @@ function App() {
             authUser ? <AdminDashboard /> : <Navigate to="/" />
           }
         />
+      
+        <Route
+            path="/testmaindash"
+            element={
+              dbUser ? <MainDashboard /> : <Navigate to="/" />
+            }
+          />
         </Route>
       </Routes>
     </BrowserRouter>
