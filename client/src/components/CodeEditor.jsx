@@ -1,37 +1,27 @@
 import Editor from "@monaco-editor/react";
-import { useState, useEffect } from "react";
 
-function CodeEditor({ onRun }) {
-
-  const [code, setCode] = useState("");
-
-  useEffect(() => {
-    const saved = localStorage.getItem("lecture-code");
-
-    if (saved) {
-      setCode(saved);
-    }
-  }, []);
-
-  useEffect(() => {
-    localStorage.setItem("lecture-code", code);
-  }, [code]);
-
+/* code editor component
+ Props:
+   code        – current code string
+   onChange    – called with new code string on every edit
+   language    – syntax highlighting language
+   height      – CSS height passed to Monaco
+*/
+function CodeEditor({ code, onChange, language = "python", height = "100%" }) {
   return (
-    <div>
-
-      <Editor
-        height="300px"
-        defaultLanguage="javascript"
-        value={code}
-        onChange={(value) => setCode(value || "")}
-      />
-
-      <button onClick={() => onRun(code)}>
-        Run
-      </button>
-
-    </div>
+    <Editor
+      height={height}
+      language={language}
+      theme="vs-dark"
+      value={code}
+      onChange={(val) => onChange(val ?? "")}
+      options={{
+        minimap: { enabled: false },
+        fontSize: 14,
+        scrollBeyondLastLine: false,
+        wordWrap: "on",
+      }}
+    />
   );
 }
 
