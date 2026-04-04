@@ -6,6 +6,7 @@ const { checkTempDir } = require('./src/utils/fileManager');
 const { handleWsExecute } = require('./src/routes/wsExecute');
 
 const PORT = process.env.PORT || 3001;
+const MAX_CONCURRENT_WS = parseInt(process.env.MAX_CONCURRENT_WS || '100', 10);
 
 async function main() {
   await checkTempDir();
@@ -15,6 +16,11 @@ async function main() {
 
   wss.on('connection', (ws) => {
     // First message must be the 'start' payload
+    if (wss.clients.size > MAX_CONCURRENT_WS) {
+      ws.close(1013, 'Server at capacity, try again shortly');
+      return;
+    }
+
     ws.once('message', (msg) => handleWsExecute(ws, msg.toString()));
   });
 
