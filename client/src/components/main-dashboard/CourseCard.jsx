@@ -5,14 +5,14 @@ export default function CourseCard({
   started,
   onEnroll,
   onStart,
-  getIcon,
-}) {
+}) 
+{
   return (
     <div style={card}>
       <div style={cardLeft}>
         <div style={cardAccent}>
-          {getIcon(course.course_name) && (
-            <img src={getIcon(course.course_name)} style={icon} />
+          {course.logo && (
+            <img src={course.logo} style={icon} />
           )}
         </div>
 
@@ -51,10 +51,8 @@ export default function CourseCard({
 }
 
 const card = {
-  width: "100%",
   display: "flex",
   justifyContent: "space-between",
-  alignItems: "stretch",
   borderRadius: 14,
   background: "linear-gradient(135deg,#1e293b,#0f172a)",
   minHeight: 90,
@@ -67,8 +65,7 @@ const cardLeft = {
 };
 
 const cardAccent = {
-  width: 140,
-  minWidth: 90,
+  width: 120,
   background: "linear-gradient(135deg,#1e3a8a,#0f172a)",
   display: "flex",
   alignItems: "center",
@@ -76,8 +73,9 @@ const cardAccent = {
 };
 
 const icon = {
-  width: "50%",
-  height: "50%",
+  width: "60%",
+  height: "60%",
+  objectFit: "contain",
 };
 
 const contentLeft = {
@@ -96,11 +94,10 @@ const progressWrap = {
 
 const progressHeader = {
   display: "flex",
+  justifyContent: "flex-end",
   width: "90%",
-  justifyContent: "flex-end", 
   fontSize: 12,
   color: "#94a3b8",
-  marginBottom: 4,
 };
 
 const bar = {
@@ -120,7 +117,7 @@ const buttonGroup = {
   display: "flex",
   gap: 12,
   alignItems: "center",
-  margin: "auto 50px",
+  margin: "auto 16px",
 };
 
 const baseBtn = {
