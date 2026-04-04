@@ -11,7 +11,7 @@ export default function MainDashboard() {
   const [courses, setCourses] = useState([]);
   const [lectures, setLectures] = useState([]);
   const [enrolledCourses, setEnrolledCourses] = useState({});
-  const [startedCourses, setStartedCourses] = useState({});
+  const [courseProgress, setCourseProgress] = useState({});
 
   const [view, setView] = useState("dashboard");
   const [selectedCourse, setSelectedCourse] = useState(null);
@@ -25,17 +25,25 @@ export default function MainDashboard() {
       const l = await lecturesApi.get("all");
       const e = await enrollmentsApi.get("all");
 
-      setCourses(c?.data || c || []);
-      setLectures(l?.data || l || []);
+      const coursesData = c?.data || c || [];
+      const lecturesData = l?.data || l || [];
+      const enrollmentsData = e?.data || e || [];
 
-      const map = {};
-      (e?.data || e || []).forEach((en) => {
-        if (en.user_id === dbUser.user_id) {
-          map[en.course_id] = true;
+      setCourses(coursesData);
+      setLectures(lecturesData);
+
+      const enrollMap = {};
+      const progressMap = {};
+
+      enrollmentsData.forEach((en) => {
+        if (String(en.user_id) === String(dbUser.user_id)) {
+          enrollMap[en.course_id] = true;
+          progressMap[en.course_id] = en.course_progress || 0;
         }
       });
 
-      setEnrolledCourses(map);
+      setEnrolledCourses(enrollMap);
+      setCourseProgress(progressMap);
     };
 
     load();
@@ -44,39 +52,38 @@ export default function MainDashboard() {
   if (!dbUser) return <div>Loading...</div>;
 
   const getProgress = (courseId) => {
-    const list = lectures.filter(
-      (l) => String(l.course_id) === String(courseId)
-    );
-
-    if (!list.length) return 0;
-
-    const completed = list.filter((l) => l.completed).length;
-    return Math.round((completed / list.length) * 100);
+    return courseProgress[courseId] || 0;
   };
 
   const handleEnroll = async (course) => {
     if (!dbUser?.user_id) return;
-
     if (enrolledCourses[course.course_id]) return;
 
     await enrollmentsApi.create({
       course_id: course.course_id,
       user_id: dbUser.user_id,
+      course_progress: 0,
     });
 
     setEnrolledCourses((prev) => ({
       ...prev,
       [course.course_id]: true,
     }));
+
+    setCourseProgress((prev) => ({
+      ...prev,
+      [course.course_id]: 0,
+    }));
   };
 
-  const handleStart = (course) => {
-    setStartedCourses((prev) => ({
-      ...prev,
-      [course.course_id]: true,
-    }));
+  const handleStart = () => {};
+  
+  const handleCardClick = (course) => {
+  const fullCourse = courses.find(
+    (c) => String(c.course_id) === String(course.course_id)
+  );
 
-    setSelectedCourse(course);
+  setSelectedCourse(fullCourse);
 
     const list = lectures.filter(
       (l) => String(l.course_id) === String(course.course_id)
@@ -95,21 +102,20 @@ export default function MainDashboard() {
           <button style={backBtn} onClick={() => setView("dashboard")}>
             ← Back to courses
           </button>
-
-          <div style={courseHeader}>
-            {selectedCourse.logo && (
-              <img src={selectedCourse.logo} style={bigIcon} />
-            )}
-
-            <div>
-              <h1>{selectedCourse.course_name}</h1>
-              <p style={desc}>{selectedCourse.course_description}</p>
-
-              <p style={meta}>
-                0 / {courseLectures.length} lectures
-              </p>
-            </div>
-          </div>
+        
+        <div style={courseHeader}>
+          <img
+          src={selectedCourse.logo}
+          style={bigIcon}
+          alt="course"
+        />
+        
+      <div>
+        <h1>{selectedCourse.course_name}</h1>
+        <p style={desc}>{selectedCourse.course_description}</p>
+        <p style={meta}>{progress}% completed</p>
+        </div>
+      </div>
 
           <div style={bigBar}>
             <div style={{ ...bigFill, width: `${progress}%` }} />
@@ -142,9 +148,9 @@ export default function MainDashboard() {
                 course={course}
                 progress={progress}
                 enrolled={enrolledCourses[course.course_id]}
-                started={startedCourses[course.course_id]}
                 onEnroll={handleEnroll}
                 onStart={handleStart}
+                onCardClick={handleCardClick} 
               />
             );
           })}
@@ -153,7 +159,6 @@ export default function MainDashboard() {
     </div>
   );
 }
-
 
 const app = {
   minHeight: "100vh",
@@ -166,20 +171,20 @@ const app = {
 
 const container = {
   width: "100%",
-  maxWidth: 1200,
-  padding: "80px 24px",
+  maxWidth: 1100,
+  padding: "60px 20px",
 };
 
 const title = {
-  fontSize: 42,
-  fontWeight: "bold",
-  marginBottom: 20,
+  fontSize: 38,
+  fontWeight: 700,
+  marginBottom: 30,
 };
 
 const courseList = {
   display: "flex",
   flexDirection: "column",
-  gap: 16,
+  gap: 20,
 };
 
 const backBtn = {
@@ -190,9 +195,7 @@ const backBtn = {
   cursor: "pointer",
 };
 
-const desc = {
-  color: "#94a3b8",
-};
+const desc = { color: "#94a3b8" };
 
 const lectureList = {
   marginTop: 20,
@@ -205,18 +208,6 @@ const lectureCard = {
   padding: 12,
   background: "#0f172a",
   borderRadius: 10,
-};
-
-const courseHeader = {
-  display: "flex",
-  alignItems: "center",
-  gap: 24,
-};
-
-const bigIcon = {
-  width: 90,
-  height: 90,
-  objectFit: "contain",
 };
 
 const meta = {
@@ -235,4 +226,17 @@ const bigFill = {
   height: 8,
   background: "#22c55e",
   borderRadius: 999,
+};
+
+const courseHeader = {
+  display: "flex",
+  alignItems: "center",
+  gap: 24,
+  marginBottom: 20,
+};
+
+const bigIcon = {
+  width: 90,
+  height: 90,
+  objectFit: "contain",
 };
