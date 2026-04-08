@@ -18,7 +18,7 @@ const LINE_COLORS = {
    onStop       – called when ■ Stop is clicked (kills the running process)
 */
 
-function Terminal({ lines, isRunning, onSendInput, onRun, onStop }) {
+function Terminal({ lines, isRunning, onSendInput, onRun, onStop, isCollapsed = false, onToggleCollapse }) {
   const outputRef = useRef(null);
   const endRef    = useRef(null);
   const [inputBuffer, setInputBuffer] = useState("");
@@ -59,9 +59,21 @@ function Terminal({ lines, isRunning, onSendInput, onRun, onStop }) {
 
       {/* -- Header ------------------------------------------ */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "4px 10px", background: "#161b22", borderBottom: "1px solid #2a2a3a", flexShrink: 0 }}>
-        <span style={{ color: "#8b949e", fontSize: "0.8em", fontFamily: "monospace" }}>
-          Terminal{isRunning ? " — click here then type" : ""}
-        </span>
+        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+          {/* Collapse / expand toggle */}
+          {onToggleCollapse && (
+            <button
+              onClick={onToggleCollapse}
+              title={isCollapsed ? "Expand terminal" : "Collapse terminal"}
+              style={{ background: "none", border: "none", color: "#64748b", cursor: "pointer", padding: "0 2px", fontSize: "0.82em", lineHeight: 1 }}
+            >
+              {isCollapsed ? "▲" : "▼"}
+            </button>
+          )}
+          <span style={{ color: "#8b949e", fontSize: "0.8em", fontFamily: "monospace" }}>
+            Terminal{isRunning ? " — click here then type" : ""}
+          </span>
+        </div>
 
         <div style={{ display: "flex", gap: "6px" }}>
           {/* Stop button — only visible while running */}

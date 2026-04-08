@@ -4,6 +4,7 @@ import CodeEditor from "../components/CodeEditor";
 import Terminal from "../components/Terminal";
 import TaskPanel from "../components/TaskPanel";
 import { lecturesApi } from "../api/data/lecture";
+import { coursesApi } from "../api/data/course";
 import { lectureSessionsApi } from "../api/data/lecture_session";
 import { tasksApi } from "../api/data/task";
 import { enrollmentsApi } from "../api/data/enrollment";
@@ -22,6 +23,20 @@ const VIDEO_H_MAX = 600;
 const EDITOR_PCT_MIN = 20;
 const EDITOR_PCT_MAX = 85;
 
+// mapping course_name to languages
+function courseNameToLanguage(name = "") {
+  const lower = name.toLowerCase().trim();
+  const MAP = {
+    python: "python",
+    javascript: "javascript"
+  };
+  if (MAP[lower]) return MAP[lower];
+  for (const key of Object.keys(MAP)) {
+    if (lower.startsWith(key)) return MAP[key];
+  }
+  return "python"; // safe default
+}
+
 function LecturePage() {
   const { lectureId } = useParams();
   const { dbUser } = useAuth();
@@ -29,6 +44,7 @@ function LecturePage() {
 
   // -- Core data ------------------------------------------
   const [lecture, setLecture] = useState(null);
+  const [editorLanguage, setEditorLanguage] = useState(courseNameToLanguage("")); // use function default return as fallback
   const [tasks, setTasks] = useState([]);
   const [sessionId, setSessionId] = useState(null);
   const [sessionProgress, setSessionProgress] = useState(0);
@@ -47,6 +63,8 @@ function LecturePage() {
   const [error, setError] = useState(null);
   const [completing, setCompleting] = useState(false);
   const [initialized, setInitialized] = useState(false);
+  const [transcriptOpen, setTranscriptOpen] = useState(true);
+  const [terminalCollapsed, setTerminalCollapsed] = useState(false);
 
   // -- Terminal state ------------------------------------------
   const [terminalLines, setTerminalLines] = useState([]);
@@ -94,13 +112,19 @@ function LecturePage() {
         if (cancelled) return;
         setLecture(lectureData);
 
-        let data = [];
+        // get the language from the course
         try {
-          data = await tasksApi.getByLecture(lectureId);
-          data.sort((a, b) => a.index - b.index);
+          const courseData = await coursesApi.get(lectureData.course_id);
+          if (!cancelled) setEditorLanguage(courseNameToLanguage(courseData.course_name));
+        } catch { /* keep default language if course fetch fails */ }
+
+        let taskData = [];
+        try {
+          taskData = await tasksApi.getByLecture(lectureId);
+          taskData.sort((a, b) => a.index - b.index);
         } catch { /* no tasks — not a hard error */ }
         if (cancelled) return;
-        setTasks(data);
+        setTasks(taskData);
 
         let session = await lectureSessionsApi.getByLectureAndUser(lectureId, userId);
         if (!session) {
@@ -117,7 +141,7 @@ function LecturePage() {
         setSessionId(session.session_id);
         setSessionProgress(progress);
 
-        const resumeIndex = Math.min(progress, Math.max(data.length - 1, 0));
+        const resumeIndex = Math.min(progress, Math.max(taskData.length - 1, 0));
         setTaskIndex(resumeIndex);
 
         const savedCode = session.code_input || DEFAULT_CODE;
@@ -217,7 +241,7 @@ function LecturePage() {
       ws.send(JSON.stringify({
         type: "start",
         code: codeRef.current,
-        language: "python", // currently hardcoded, figure out a way to distinguish language based on course/lecture
+        language: editorLanguage,
         sessionId: sessionId ?? null,
         lectureId,
         taskIndex,
@@ -433,6 +457,40 @@ function LecturePage() {
         {/* -- Video / Task divider -- */}
         <div className="resize-handle resize-handle--h" onMouseDown={handleVideoDragStart} title="Drag to resize" />
 
+        {/* -- Transcript -- */}
+        {lecture.transcript && (
+          <div style={{ flexShrink: 0, borderBottom: "1px solid #2a2a3a" }}>
+            {/* Transcript header / toggle */}
+            <button
+              onClick={() => setTranscriptOpen((o) => !o)}
+              style={{
+                display: "flex", alignItems: "center", justifyContent: "space-between",
+                width: "100%", background: "#161b22", border: "none", borderTop: "1px solid #2a2a3a",
+                padding: "6px 10px", cursor: "pointer", color: "#94a3b8", fontSize: "0.8em",
+                fontFamily: "inherit", borderRadius: 0,
+              }}
+            >
+              <span style={{ fontWeight: 600, letterSpacing: "0.04em", textTransform: "uppercase" }}>
+                  Transcript
+              </span>
+              <span style={{ fontSize: "0.9em", color: "#64748b" }}>
+                {transcriptOpen ? "▲ collapse" : "▼ expand"}
+              </span>
+            </button>
+
+            {/* Transcript body */}
+            {transcriptOpen && (
+              <div style={{
+                maxHeight: "180px", overflowY: "auto", padding: "10px 12px",
+                background: "#0d1117", color: "#cbd5e1", fontSize: "0.82em",
+                lineHeight: 1.65, whiteSpace: "pre-wrap", wordBreak: "break-word",
+              }}>
+                {lecture.transcript}
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Task panel */}
         <TaskPanel
           tasks={tasks}
@@ -451,20 +509,27 @@ function LecturePage() {
       {/* -- RIGHT PANEL ------------------------------------------ */}
       <div ref={rightPanelRef} className="lecture-right">
 
-        <div style={{ flex: editorPct, minHeight: 0, overflow: "hidden" }}>
-          <CodeEditor code={code} onChange={setCode} height="100%" />
+        <div style={{ flex: terminalCollapsed ? 1 : editorPct, minHeight: 0, overflow: "hidden" }}>
+          <CodeEditor code={code} onChange={setCode} language={editorLanguage} height="100%" />
         </div>
 
         {/* ── Editor / Terminal divider ── */}
-        <div className="resize-handle resize-handle--h" onMouseDown={handleEditorDragStart} title="Drag to resize" />
+        {!terminalCollapsed && (
+          <div className="resize-handle resize-handle--h" onMouseDown={handleEditorDragStart} title="Drag to resize" />
+        )}
 
-        <div style={{ flex: 100 - editorPct, minHeight: 0, overflow: "hidden" }}>
+        <div style={terminalCollapsed
+          ? { flexShrink: 0, height: "33px", overflow: "hidden" }
+          : { flex: 100 - editorPct, minHeight: 0, overflow: "hidden" }
+        }>
           <Terminal
             lines={terminalLines}
             isRunning={isRunning}
             onSendInput={handleSendInput}
             onRun={handleRun}
             onStop={handleStop}
+            isCollapsed={terminalCollapsed}
+            onToggleCollapse={() => setTerminalCollapsed((c) => !c)}
           />
         </div>
       </div>
