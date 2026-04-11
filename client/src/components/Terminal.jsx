@@ -18,7 +18,7 @@ const LINE_COLORS = {
    onStop       – called when ■ Stop is clicked (kills the running process)
 */
 
-function Terminal({ lines, isRunning, onSendInput, onRun, onStop, isCollapsed = false, onToggleCollapse }) {
+function Terminal({ lines, isRunning, onSendInput, onRun, onStop, isCollapsed = false, onToggleCollapse, runDisabled = false }) {
   const outputRef = useRef(null);
   const endRef    = useRef(null);
   const [inputBuffer, setInputBuffer] = useState("");
@@ -89,8 +89,8 @@ function Terminal({ lines, isRunning, onSendInput, onRun, onStop, isCollapsed = 
           {/* Run button — disabled while running */}
           <button
             onClick={onRun}
-            disabled={isRunning}
-            style={{ background: isRunning ? "#374151" : "#2563eb", color: "#fff", border: "none", padding: "3px 12px", borderRadius: "4px", cursor: isRunning ? "not-allowed" : "pointer", fontSize: "0.82em" }}
+            disabled={isRunning || runDisabled}
+            style={{ background: (isRunning || runDisabled) ? "#374151" : "#2563eb", color: "#fff", border: "none", padding: "3px 12px", borderRadius: "4px", cursor: (isRunning || runDisabled) ? "not-allowed" : "pointer", fontSize: "0.82em" }}
           >
             {isRunning ? "Running…" : "▶ Run"}
           </button>

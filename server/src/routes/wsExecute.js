@@ -95,7 +95,7 @@ async function handleWsExecute(ws, rawMessage) {
     return;
   }
 
-  const { code, language, sessionId, lectureId } = parsed;
+  const { code, language, sessionId, lectureId, directEvaluation } = parsed;
 
   let taskIndex = parsed.taskIndex;
   if (taskIndex !== undefined && taskIndex !== null) {
@@ -226,7 +226,10 @@ async function handleWsExecute(ws, rawMessage) {
       return;
     }
 
-    if (!sessionId || !lectureId) {
+    // Support directEvaluation for exam task questions (no lectureId needed)
+    const useDirectEval = directEvaluation !== undefined && directEvaluation !== null;
+
+    if (!useDirectEval && (!sessionId || !lectureId)) {
       sendJson({ type: 'eval_result', passed: false, message: 'No session context - task not evaluated' });
       await cleanup();
       ws.close();
@@ -238,7 +241,9 @@ async function handleWsExecute(ws, rawMessage) {
     //
 
     try {
-      const evalData = await current_eval(sessionId, lectureId, taskIndex);
+      const evalData = useDirectEval
+        ? parseEvaluation(typeof directEvaluation === 'string' ? directEvaluation : JSON.stringify(directEvaluation))
+        : await current_eval(sessionId, lectureId, taskIndex);
 
       if (!evalData || evalData.expected === null) {
         sendJson({ type: 'eval_result', passed: false, message: 'No evaluation found for current task' });
@@ -282,22 +287,25 @@ async function handleWsExecute(ws, rawMessage) {
       const passed = compareOutput(result.stdout, evalData);
 
       if (passed) {
-        const { data: freshSession } = await supabase
-          .from('lecture_session')
-          .select('session_progress')
-          .eq('session_id', sessionId)
-          .maybeSingle();
+        // Only update lecture_session progress for lecture tasks, not exam tasks
+        if (!useDirectEval && sessionId) {
+          const { data: freshSession } = await supabase
+            .from('lecture_session')
+            .select('session_progress')
+            .eq('session_id', sessionId)
+            .maybeSingle();
 
-        if (freshSession) {
-          const effectiveIndex = (taskIndex !== undefined && taskIndex !== null)
-            ? taskIndex
-            : freshSession.session_progress;
+          if (freshSession) {
+            const effectiveIndex = (taskIndex !== undefined && taskIndex !== null)
+              ? taskIndex
+              : freshSession.session_progress;
 
-          if (effectiveIndex === freshSession.session_progress) {
-            await supabase
-              .from('lecture_session')
-              .update({ session_progress: freshSession.session_progress + 1 })
-              .eq('session_id', sessionId);
+            if (effectiveIndex === freshSession.session_progress) {
+              await supabase
+                .from('lecture_session')
+                .update({ session_progress: freshSession.session_progress + 1 })
+                .eq('session_id', sessionId);
+            }
           }
         }
 

@@ -112,6 +112,17 @@ function LecturePage() {
         if (cancelled) return;
         setLecture(lectureData);
 
+        // Access control: lecture_index N requires course_progress >= N - 1
+        try {
+          const userEnrollments = await enrollmentsApi.getByUser(userId);
+          const enrollment = userEnrollments.find((e) => e.course_id === lectureData.course_id);
+          const required = (lectureData.lecture_index ?? 1) - 1;
+          if (!enrollment || enrollment.course_progress < required) {
+            navigate(AFTER_LECTURE_PATH, { replace: true });
+            return;
+          }
+        } catch { /* If enrollment check fails, allow access rather than hard-blocking */ }
+
         // get the language from the course
         try {
           const courseData = await coursesApi.get(lectureData.course_id);

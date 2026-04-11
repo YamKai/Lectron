@@ -3,6 +3,7 @@ import { useAuth } from "./context/AuthContext";
 import LandingPage from "./pages/LandingPage";
 import AdminDashboard from "./pages/AdminDashboard";
 import LecturePage from "./pages/LecturePage";
+import ExamPage from "./pages/ExamPage";
 import Layout from "./pages/Layout";
 import { signInWithGoogle } from "./auth";
 
@@ -35,6 +36,10 @@ function App() {
           <Route
             path="/lecture/:lectureId"
             element={authUser ? <LecturePage /> : <Navigate to="/" />}
+          />
+          <Route
+            path="/exam/:examId"
+            element={authUser ? <ExamPage /> : <Navigate to="/" />}
           />
         </Route>
       </Routes>
