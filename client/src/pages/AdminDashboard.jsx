@@ -1,23 +1,53 @@
 import { useEffect, useState } from "react";
 import { coursesApi } from "../api/data/course";
 import { lecturesApi } from "../api/data/lecture";
+import { tasksApi } from "../api/data/task";
+import { examsApi } from "../api/data/exam";
+import AdminViews from "../components/admin-dashboard/AdminView.jsx";
+
+const exists = (list, value, key) => {
+  return list.some(
+    (item) =>
+      String(item[key]).toLowerCase().trim() ===
+      String(value).toLowerCase().trim()
+  );
+};
 
 export default function AdminDashboard() {
   const [courses, setCourses] = useState([]);
   const [lectures, setLectures] = useState([]);
+  const [tasks, setTasks] = useState([]);
+  const [tempTasks, setTempTasks] = useState([]);
+  const [exams, setExams] = useState([]);
+
+const [taskForm, setTaskForm] = useState({
+  description: "",
+  index: "",
+  evaluation: "",
+});
+  const [tempLectures, setTempLectures] = useState([]);
+  const [tempExams, setTempExams] = useState([]);
 
   const [selectedCourse, setSelectedCourse] = useState(null);
   const [selectedLecture, setSelectedLecture] = useState(null);
+  const [selectedTask, setSelectedTask] = useState(null);
+  const [selectedExam, setSelectedExam] = useState(null);
 
-  const [view, setView] = useState("none");
+const [view, setView] = useState("none");
 
   const [form, setForm] = useState({
     course_name: "",
     course_description: "",
+    logo: "",  
     title: "",
     content: "",
+    video_url: "",
+    transcript: "",
+    lecture_index: "",
+    exam_name: "",
+    exam_description: "",
+    exam_index: "",   
   });
-
 
   const loadCourses = async () => {
     const data = await coursesApi.get("all");
@@ -25,84 +55,136 @@ export default function AdminDashboard() {
   };
 
   const loadLectures = async (courseId) => {
-    const data = await lecturesApi.get("all");
-    const list = data?.data || data || [];
+  const data = await lecturesApi.get("all");
+  const list = data?.data || data || [];
 
-    setLectures(
-      list.filter((l) => String(l.course_id) === String(courseId))
-    );
-  };
+  setLectures(
+    list
+      .filter((l) => String(l.course_id) === String(courseId))
+      .sort((a, b) => (a.lecture_index ?? 0) - (b.lecture_index ?? 0))
+  );
+};
+
+const loadTasks = async (lectureId) => {
+  try {
+    const res = await tasksApi.get(`belongto/${lectureId}`);
+    const data = res?.data || res;
+
+    console.log("TASKS:", data);
+
+setTasks(
+  (Array.isArray(data) ? data : []).sort(
+    (a, b) => (a.index ?? 0) - (b.index ?? 0)
+  )
+);
+
+} catch (err) {
+    console.error("Load tasks error:", err);
+    setTasks([]);
+  }
+};
+
+  const loadExams = async (courseId) => {
+  const data = await examsApi.get("all");
+  const list = data?.data || data || [];
+
+  setExams(
+    list
+      .filter((e) => String(e.course_id) === String(courseId))
+      .sort((a, b) => (a.exam_index ?? 0) - (b.exam_index ?? 0))
+  );
+};
 
   useEffect(() => {
     loadCourses();
   }, []);
 
   /* COURSE */
-
   const handleSelectCourse = async (course) => {
     setSelectedCourse(course);
-    setSelectedLecture(null);
     setView("course");
 
-    setForm({
-      course_name: course.course_name,
-      course_description: course.course_description,
-      title: "",
-      content: "",
-    });
+   setForm({
+  course_name: course.course_name || "",
+  course_description: course.course_description || "",
+  logo: course.logo || "",
+  title: "",
+  content: "",
+  video_url: "",
+  transcript: "",
+  lecture_index: "",
+  exam_name: "",
+  exam_description: "",
+  exam_index: "",
+});
 
     await loadLectures(course.course_id);
+    await loadExams(course.course_id);
   };
 
   const handleAddCourse = () => {
-    setSelectedCourse(null);
-    setSelectedLecture(null);
-    setView("course");
+  setSelectedCourse(null);
+  setView("course");
 
-    setForm({
-      course_name: "",
-      course_description: "",
-      title: "",
-      content: "",
-    });
+  setTempLectures([]);
+  setTempExams([]);
 
-    setLectures([]);
-  };
+  setForm({
+    course_name: "",
+    course_description: "",
+    logo: "", 
+    title: "",
+    content: "",
+    video_url: "",
+    transcript: "",
+    lecture_index: "",
+    exam_name: "",
+    exam_description: "",
+    exam_index: "", 
+  });
+
+  setLectures([]);
+  setExams([]);
+};
 
   const handleSaveCourse = async () => {
-    if (!form.course_name.trim()) {
-      alert("Course name required");
-      return;
-    }
+    if (!form.course_name.trim()) return alert("Course name required");
 
-    try {
-      if (selectedCourse) {
-        await coursesApi.update(selectedCourse.course_id, {
-          course_name: form.course_name,
-          course_description: form.course_description,
-        });
-      } else {
-        await coursesApi.create({
-          course_name: form.course_name,
-          course_description: form.course_description,
-        });
-      }
+    if (!selectedCourse && exists(courses, form.course_name, "course_name")) {
+    return alert("Course already exists");
+  }
 
-      await loadCourses();
+    let courseId;
 
-      setView("none");
-      setSelectedCourse(null);
-      setForm({
-        course_name: "",
-        course_description: "",
-        title: "",
-        content: "",
+    if (selectedCourse) {
+      await coursesApi.update(selectedCourse.course_id, {
+        course_name: form.course_name,
+        course_description: form.course_description,
+        logo: form.logo, 
+      });  
+      courseId = selectedCourse.course_id;
+    } else {
+      const res = await coursesApi.create({
+        course_name: form.course_name,
+        course_description: form.course_description,
+        logo: form.logo, 
       });
 
-    } catch (err) {
-      console.error(err);
-      alert("Failed to save course");
+      const newCourse = res?.data || res;
+      courseId = newCourse.course_id;
+
+      for (let l of tempLectures) {
+        await lecturesApi.create({ ...l, course_id: courseId });
+      }
+
+      for (let e of tempExams) {
+        await examsApi.create({ ...e, course_id: courseId });
+      }
     }
+
+    await loadCourses();
+    setView("none");
+    setSelectedCourse(null);
   };
 
   const handleDeleteCourse = async () => {
@@ -115,346 +197,372 @@ export default function AdminDashboard() {
     setSelectedCourse(null);
   };
 
-  /* LECTURE */
 
-  const handleOpenLecture = (lecture) => {
-    setSelectedLecture(lecture);
-    setView("lecture");
+/* LECTURE */
+ const handleOpenLecture = async (lecture) => {
+  setSelectedLecture(lecture);
+  setView("lecture");
 
-    setForm({
-      ...form,
-      title: lecture.lecture_name,
-      content: lecture.lecture_description,
-    });
-  };
+  setForm({
+    ...form,
+    title: lecture.lecture_name,
+    content: lecture.lecture_description,
+    video_url: lecture.video_url || "",
+    transcript: lecture.transcript || "",
+    lecture_index: lecture.lecture_index || "",
+  });
 
-  const handleAddLecture = async () => {
-    if (!form.title.trim()) {
-      alert("Lecture title required");
-      return;
-    }
+  setTasks([]); 
+  await loadTasks(lecture.lecture_id);
+};
 
-    await lecturesApi.create({
-      lecture_name: form.title,
-      lecture_description: form.content,
-      transcript: "",
-      video_url: "",
-      evaluation: "",
-      course_id: selectedCourse.course_id,
-    });
 
-    await loadLectures(selectedCourse.course_id);
+const handleAddLecture = async () => {
+  if (!form.title.trim()) return alert("Lecture title required");
+  
+  const list = selectedCourse ? lectures : tempLectures;
+
+  if (exists(list, form.title, "lecture_name")) {
+    return alert("Lecture already exists in this course");
+  }
+
+  if (list.some(l => Number(l.lecture_index) === Number(form.lecture_index))) {
+    return alert("Lecture index already used");
+  }
+
+  if (!selectedCourse) {
+    setTempLectures([
+      ...tempLectures,
+      {
+        lecture_name: form.title,
+        lecture_description: form.content,
+        video_url: form.video_url,
+        transcript: form.transcript,
+        lecture_index: Number(form.lecture_index) || 0,
+      },
+    ]);
 
     setForm({
       ...form,
       title: "",
       content: "",
+      video_url: "",
+      transcript: "",
+      lecture_index: "",
     });
-  };
 
-  const handleUpdateLecture = async () => {
-    await lecturesApi.update(selectedLecture.lecture_id, {
-      lecture_name: form.title,
+    setView("course");
+    return;
+  }
+
+  try {
+const res = await lecturesApi.create({
+        lecture_name: form.title,
       lecture_description: form.content,
+      video_url: form.video_url,
+      transcript: form.transcript,
+      lecture_index: Number(form.lecture_index) || 0,
+      course_id: selectedCourse.course_id,
     });
+
+    const newLecture = res?.data || res;
+
+    for (let t of tempTasks) {
+  await tasksApi.create({
+    ...t,
+    lecture_id: newLecture.lecture_id,
+  });
+}
+
+setTempTasks([]);
 
     await loadLectures(selectedCourse.course_id);
-  };
+
+    setSelectedLecture(null);
+    setView("course");
+  } catch (err) {
+    console.error(err);
+    alert("Add failed");
+  }
+};
+
+ const handleUpdateLecture = async () => {
+  if (!selectedLecture?.lecture_id) return;
+
+  const filtered = lectures.filter(
+  l => l.lecture_id !== selectedLecture.lecture_id
+);
+
+if (exists(filtered, form.title, "lecture_name")) {
+  return alert("Lecture already exists");
+}
+
+  try {
+    await lecturesApi.update(selectedLecture.lecture_id, {
+  lecture_name: form.title,
+  lecture_description: form.content,
+  video_url: form.video_url,
+  transcript: form.transcript,
+  lecture_index: Number(form.lecture_index), 
+
+});
+
+    await loadLectures(selectedCourse.course_id);
+
+    setSelectedLecture(null);
+    setView("course");
+  } catch (err) {
+    console.error(err);
+    alert("Update failed");
+  }
+};
 
   const handleDeleteLecture = async () => {
     if (!window.confirm("Delete this lecture?")) return;
 
-    try {
-      await lecturesApi.delete(selectedLecture.lecture_id);
+    await lecturesApi.delete(selectedLecture.lecture_id);
+    await loadLectures(selectedCourse.course_id);
 
-      await loadLectures(selectedCourse.course_id);
-
-      setView("course");
-      setSelectedLecture(null);
-    } catch (err) {
-      console.error(err);
-      alert("Failed to delete lecture");
-    }
+   setSelectedLecture(null);
+setView("course");
   };
 
-  /* UI */
 
-  return (
-    <div style={app}>
-      <div style={layout}>
-        <div style={sidebar}>
-          <h2>Courses</h2>
+/* TASK */
+ const handleOpenTask = (task) => {
+  setSelectedTask(task);
 
-          {courses.map((c) => (
-            <div
-              key={c.course_id}
-              style={{
-                ...card,
-                ...(selectedCourse?.course_id === c.course_id && activeCard),
-              }}
-              onClick={() => handleSelectCourse(c)}
-            >
-              {c.course_name}
-            </div>
-          ))}
+  setTaskForm({
+    description: task?.description || "",
+    index: task?.index ?? "",
+    evaluation: task?.evaluation || "",
+  });
 
-          <div style={addCard} onClick={handleAddCourse}>
-            + Add Course
-          </div>
-        </div>
+  setView("task"); 
+};
 
-        <div style={panel}>
-          {view !== "none" && (
-            <div style={fullForm}>
-              {view === "course" && (
-                <>
-                  <h2>{selectedCourse ? "Edit Course" : "Add Course"}</h2>
+const handleAddTask = async () => {
+  if (!taskForm.description.trim()) return alert("Task description required");
 
-                  <input
-                    value={form.course_name}
-                    onChange={(e) =>
-                      setForm({ ...form, course_name: e.target.value })
-                    }
-                    placeholder="Course Name"
-                    style={input}
-                  />
+  const list = selectedLecture?.lecture_id ? tasks : tempTasks;
 
-                  <textarea
-                    value={form.course_description}
-                    onChange={(e) =>
-                      setForm({
-                        ...form,
-                        course_description: e.target.value,
-                      })
-                    }
-                    placeholder="Description"
-                    style={textareaSmall}
-                  />
+  if (exists(list, taskForm.description, "description")) {
+    return alert("Task already exists in this lecture");
+  }
 
-                  {selectedCourse && (
-                    <>
-                      <h4>Lectures</h4>
-
-                      {lectures.map((l) => (
-                        <div
-                          key={l.lecture_id}
-                          style={{
-                            ...lectureItem,
-                            ...(selectedLecture?.lecture_id ===
-                              l.lecture_id && activeLecture),
-                          }}
-                          onClick={() => handleOpenLecture(l)}
-                        >
-                          {l.lecture_name}
-                        </div>
-                      ))}
-
-                      <button
-                        style={button}
-                        onClick={() => {
-                          setView("lecture");
-                          setSelectedLecture(null);
-                          setForm({
-                            ...form,
-                            title: "",
-                            content: "",
-                          });
-                        }}
-                      >
-                        + Add Lecture
-                      </button>
-                    </>
-                  )}
-
-                  <div style={actionsRow}>
-                    <button style={backBtn} onClick={() => setView("none")}>
-                      Back
-                    </button>
-
-                    <div style={rightActions}>
-                      <button style={button} onClick={handleSaveCourse}>
-                        {selectedCourse ? "Update" : "Add"}
-                      </button>
-
-                      {selectedCourse && (
-                        <button
-                          style={deleteBtn}
-                          onClick={handleDeleteCourse}
-                        >
-                          Delete
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                </>
-              )}
-
-              {view === "lecture" && (
-                <>
-                  <h2>
-                    {selectedLecture ? "Edit Lecture" : "Add Lecture"}
-                  </h2>
-
-                  <input
-                    value={form.title}
-                    onChange={(e) =>
-                      setForm({ ...form, title: e.target.value })
-                    }
-                    placeholder="Lecture Title"
-                    style={input}
-                  />
-
-                  <textarea
-                    value={form.content}
-                    onChange={(e) =>
-                      setForm({ ...form, content: e.target.value })
-                    }
-                    placeholder="Content"
-                    style={textarea}
-                  />
-
-                  <div style={actionsRow}>
-                    <button
-                      style={backBtn}
-                      onClick={() => setView("course")}
-                    >
-                      Back
-                    </button>
-
-                    <div style={rightActions}>
-                      {!selectedLecture && (
-                        <button style={button} onClick={handleAddLecture}>
-                          Add
-                        </button>
-                      )}
-
-                      {selectedLecture && (
-                        <>
-                          <button
-                            style={button}
-                            onClick={handleUpdateLecture}
-                          >
-                            Update
-                          </button>
-                          <button
-                            style={deleteBtn}
-                            onClick={handleDeleteLecture}
-                          >
-                            Delete
-                          </button>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                </>
-              )}
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
-  );
+  if (list.some(t => Number(t.index) === Number(taskForm.index))) {
+  return alert("Task index already used");
 }
 
-/* STYLES */
+  if (!selectedLecture?.lecture_id) {
+    setTempTasks((prev) => [
+      ...prev,
+      {
+        description: taskForm.description,
+        index: Number(taskForm.index) || 0,
+        evaluation: taskForm.evaluation,
+      },
+    ]);
 
-const app = {
-  height: "100vh",
-  width: "100vw",
-  background: "#040316",
-  color: "#fff",
+    setTaskForm({
+      description: "",
+      index: "",
+      evaluation: "",
+    });
+
+    setView("lecture");
+    return;
+  }
+  try {
+    await tasksApi.create({
+      lecture_id: selectedLecture.lecture_id,
+      description: taskForm.description,
+      index: Number(taskForm.index) || 0,
+      evaluation: taskForm.evaluation,
+    });
+
+    setTaskForm({
+      description: "",
+      index: "",
+      evaluation: "",
+    });
+
+    await loadTasks(selectedLecture.lecture_id);
+    setView("lecture");
+  } catch (err) {
+    console.error(err);
+    alert("Failed to add task");
+  }
 };
 
-const layout = {
-  display: "flex",
-  height: "100vh",
-  width: "100%",
+const handleUpdateTask = async () => {
+  try {
+    await tasksApi.update(selectedTask.task_id, {
+      description: taskForm.description,
+      index: Number(taskForm.index) || 0,
+      evaluation: taskForm.evaluation,
+    });
+
+    await loadTasks(selectedLecture.lecture_id);
+  } catch (err) {
+    console.error(err);
+    alert("Update failed");
+  }
 };
 
-const sidebar = {
-  width: 260,
-  padding: 20,
-  background: "#0a0f14",
-  borderRight: "1px solid #1f2937",
+const handleDeleteTask = async (task) => {
+  if (!window.confirm("Delete this task?")) return;
+
+  try {
+    await tasksApi.delete(task.task_id);
+    await loadTasks(task.lecture_id);
+  } catch (err) {
+    console.error(err);
+    alert("Delete failed");
+  }
 };
 
-const panel = {
-  flex: 1,
-  padding: 40,
-  background: "#0b0f14",
+  /* EXAM */
+  const handleOpenExam = (exam) => {
+    setSelectedExam(exam);
+    setView("exam");
+
+    setForm({
+      ...form,
+      exam_name: exam.exam_name,
+      exam_description: exam.exam_description,
+      exam_index: exam.exam_index || "", 
+    });
+  };
+
+const handleAddExam = async () => {
+  if (!form.exam_name.trim()) return alert("Exam name required");
+
+ const list = selectedCourse?.course_id ? exams : tempExams;
+
+if (exists(list, form.exam_name, "exam_name")) {
+  return alert("Exam already exists in this course");
+}
+
+if (list.some(e => Number(e.exam_index) === Number(form.exam_index))) {
+  return alert("Exam index already used");
+}
+
+  if (!selectedCourse?.course_id) {
+    setTempExams([
+      ...tempExams,
+      {
+        exam_name: form.exam_name,
+        exam_description: form.exam_description,
+        exam_index: Number(form.exam_index) || 0,
+      },
+    ]);
+
+    setForm({
+      ...form,
+      exam_name: "",
+      exam_description: "",
+    });
+
+    setView("course");
+    return;
+  }
+  try {
+    await examsApi.create({
+      exam_name: form.exam_name,
+      exam_description: form.exam_description,
+      exam_index: Number(form.exam_index) || 0, 
+      course_id: selectedCourse.course_id,
+    });
+
+    await loadExams(selectedCourse.course_id);
+    setView("course");
+  } catch (err) {
+    console.error(err);
+    alert("Add exam failed");
+  }
 };
 
-const fullForm = {
-  width: "100%",
+
+const handleUpdateExam = async () => {
+  if (!selectedExam?.exam_id) return;
+
+  try {
+    await examsApi.update(selectedExam.exam_id, {
+      exam_name: form.exam_name,
+      exam_description: form.exam_description,
+      exam_index: Number(form.exam_index) || 0, 
+    });
+
+    await loadExams(selectedCourse.course_id);
+    setView("course");
+  } catch (err) {
+    console.error(err);
+    alert("Update failed");
+  }
 };
 
-const card = {
-  padding: 14,
-  background: "#11161c",
-  borderRadius: 10,
-  marginBottom: 10,
-  cursor: "pointer",
+
+const handleDeleteExam = async () => {
+  if (!window.confirm("Delete this exam?")) return;
+
+  try {
+    await examsApi.delete(selectedExam.exam_id);
+    await loadExams(selectedCourse.course_id);
+    setView("course");
+  } catch (err) {
+    console.error(err);
+    alert("Delete failed");
+  }
 };
 
-const activeCard = {
-  border: "1px solid #3b82f6",
-};
 
-const lectureItem = {
-  padding: 10,
-  background: "#11161c",
-  borderRadius: 8,
-  marginTop: 8,
-  cursor: "pointer",
-};
+return (
+  <AdminViews
+    view={view}
+    form={form}
+    setForm={setForm}
+    taskForm={taskForm}
+    setTaskForm={setTaskForm}
 
-const activeLecture = {
-  border: "1px solid #3b82f6",
-};
+    courses={courses}
+    handleSelectCourse={handleSelectCourse}
+    handleAddCourse={handleAddCourse}
+    handleSaveCourse={handleSaveCourse}
+    handleDeleteCourse={handleDeleteCourse}
 
-const addCard = {
-  ...card,
-  border: "1px dashed #555",
-  textAlign: "center",
-};
+    selectedCourse={selectedCourse}
+    selectedLecture={selectedLecture}
+    selectedTask={selectedTask}
+    selectedExam={selectedExam}
 
-const input = {
-  width: "100%",
-  padding: 10,
-  marginTop: 10,
-  background: "#11161c",
-  color: "#fff",
-  border: "1px solid #1f2937",
-};
+    lectures={lectures}
+    tasks={tasks}
+    exams={exams}
+    tempLectures={tempLectures}
+    tempTasks={tempTasks}
+    tempExams={tempExams}
 
-const textareaSmall = { ...input, height: 80 };
-const textarea = { ...input, height: 150 };
+    setView={setView}
+    setSelectedLecture={setSelectedLecture}
+    setSelectedTask={setSelectedTask}
+    setSelectedExam={setSelectedExam}
+    setTempTasks={setTempTasks}
 
-const button = {
-  padding: "8px 14px",
-  background: "#3b82f6",
-  border: "none",
-  color: "#fff",
-  borderRadius: 6,
-};
+    handleOpenLecture={handleOpenLecture}
+    handleAddLecture={handleAddLecture}
+    handleUpdateLecture={handleUpdateLecture}
+    handleDeleteLecture={handleDeleteLecture}
 
-const deleteBtn = {
-  ...button,
-  background: "#ef4444",
-};
+    handleOpenTask={handleOpenTask}
+    handleAddTask={handleAddTask}
+    handleUpdateTask={handleUpdateTask}
+    handleDeleteTask={handleDeleteTask}
 
-const backBtn = {
-  ...button,
-  background: "#1f2937",
-};
-
-const actionsRow = {
-  marginTop: 20,
-  display: "flex",
-  justifyContent: "space-between",
-};
-
-const rightActions = {
-  display: "flex",
-  gap: 10,
-};
+    handleOpenExam={handleOpenExam}
+    handleAddExam={handleAddExam}
+    handleUpdateExam={handleUpdateExam}
+    handleDeleteExam={handleDeleteExam}
+  />
+);
+}
