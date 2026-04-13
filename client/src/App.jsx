@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useAuth } from "./context/AuthContext";
 import LandingPage from "./pages/LandingPage";
 import AdminDashboard from "./pages/AdminDashboard";
+import MainDashboard from "./pages/MainDashboard";
 import LecturePage from "./pages/LecturePage";
 import ExamPage from "./pages/ExamPage";
 import Layout from "./pages/Layout";
@@ -26,6 +27,12 @@ function App() {
           }
         />
         <Route element={<Layout />}>
+        <Route
+            path="/testmaindash"
+            element={
+              authUser ? <MainDashboard /> : <Navigate to="/" />
+            }
+          />
           <Route
             path="/testadmindash"
             element={
