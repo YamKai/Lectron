@@ -3,6 +3,7 @@ import { useAuth } from "../context/AuthContext";
 import { coursesApi } from "../api/data/course";
 import { lecturesApi } from "../api/data/lecture";
 import { enrollmentsApi } from "../api/data/enrollment";
+import { examsApi } from "../api/data/exam";
 import CourseCard from "../components/main-dashboard/CourseCard";
 import { useNavigate } from "react-router-dom";
 
@@ -12,6 +13,7 @@ export default function MainDashboard() {
 
   const [courses, setCourses] = useState([]);
   const [lectures, setLectures] = useState([]);
+  const [exams, setExams] = useState([]);
   const [enrolledCourses, setEnrolledCourses] = useState({});
   const [courseProgress, setCourseProgress] = useState({});
 
@@ -25,14 +27,18 @@ export default function MainDashboard() {
     const load = async () => {
       const c = await coursesApi.get("all");
       const l = await lecturesApi.get("all");
+      const ex = await examsApi.get("all");
       const e = await enrollmentsApi.get("all");
 
       const coursesData = c?.data || c || [];
       const lecturesData = l?.data || l || [];
+      const examsData = ex?.data || ex || [];
+
       const enrollmentsData = e?.data || e || [];
 
       setCourses(coursesData);
       setLectures(lecturesData);
+      setExams(examsData);
 
       const enrollMap = {};
       const progressMap = {};
@@ -80,21 +86,39 @@ export default function MainDashboard() {
 
 const handleLoadLecture = (course) => {
   const progress = getProgress(course.course_id);
-  const toLecture = lectures.find(
-    (l) =>
-      String(l.course_id) === String(course.course_id) &&
-      Number(l.lecture_index) === progress + 1
+
+  const lectureList = lectures.filter(
+    (l) => String(l.course_id) === String(course.course_id)
   );
 
-  if (!toLecture) {
-    console.error(`No lecture with index ${progress + 1} found`);
-    return null;
-  } else {
-    navigate(`/lecture/${toLecture.lecture_id}`);
+  const examList = exams.filter(
+    (e) => String(e.course_id) === String(course.course_id)
+  );
+
+  const merged = [...lectureList, ...examList].sort((a, b) => {
+    const indexA = a.lecture_index ?? a.exam_index;
+    const indexB = b.lecture_index ?? b.exam_index;
+    return indexA - indexB;
+  });
+
+  const nextItem = merged.find((item) => {
+    const index = item.lecture_index ?? item.exam_index;
+    return index === progress + 1;
+  });
+
+  if (!nextItem) {
+    console.log("Course completed");
+    return;
   }
 
+  if (nextItem.lecture_id) {
+    navigate(`/lecture/${nextItem.lecture_id}`);
+  } else if (nextItem.exam_id) {
+    navigate(`/exam/${nextItem.exam_id}`);
+  }
 };
   
+
   const handleCardClick = (course) => {
   const fullCourse = courses.find(
     (c) => String(c.course_id) === String(course.course_id)
@@ -102,15 +126,33 @@ const handleLoadLecture = (course) => {
 
   setSelectedCourse(fullCourse);
 
-    const list = lectures.filter(
-      (l) => String(l.course_id) === String(course.course_id)).sort((a, b) => a.lecture_index - b.lecture_index);
+    const lectureList = lectures.filter(
+  (l) => String(l.course_id) === String(course.course_id)
+);
 
-    setCourseLectures(list);
+const examList = exams.filter(
+  (e) => String(e.course_id) === String(course.course_id)
+);
+
+const merged = [...lectureList, ...examList].sort((a, b) => {
+  const indexA = a.lecture_index ?? a.exam_index;
+  const indexB = b.lecture_index ?? b.exam_index;
+  return indexA - indexB;
+});
+
+setCourseLectures(merged)
     setView("course");
   };
 
   if (view === "course" && selectedCourse) {
     const progress = getProgress(selectedCourse.course_id);
+    const totalLectures = lectures.filter(
+  (l) => String(l.course_id) === String(selectedCourse.course_id)
+).length;
+
+const percentage = totalLectures > 0
+  ? (progress / totalLectures) * 100
+  : 0;
 
     return (
       <div style={app}>
@@ -129,25 +171,68 @@ const handleLoadLecture = (course) => {
       <div>
         <h1>{selectedCourse.course_name}</h1>
         <p style={desc}>{selectedCourse.course_description}</p>
-        <p style={meta}>{progress}% completed</p>
+        <p style={meta}>{Math.round(percentage)}% completed</p>        
         </div>
       </div>
 
           <div style={bigBar}>
-            <div style={{ ...bigFill, width: `${progress}%` }} />
+          <div style={{ ...bigFill, width: `${percentage}%` }} />
           </div>
 
-          <div style={lectureList}>
-            {courseLectures.map((lec) => (
-              <div key={lec.lecture_id} style={lectureCard}>
-                {lec.lecture_name}
-              </div>
-            ))}
-          </div>
-        </div>
+         <div style={lectureList}>
+            {courseLectures.map((item) => {
+              const isEnrolled = enrolledCourses[selectedCourse.course_id];
+  const isLecture = item.lecture_id;
+  const isExam = item.exam_id;
+
+  const index = item.lecture_index ?? item.exam_index;
+  const canOpen = isEnrolled && index <= progress + 1;
+  const canOpenExam = isEnrolled && progress === item.exam_index + 1;
+  if (isLecture) {
+    return (
+      <div
+        key={item.lecture_id}
+        style={{
+          ...lectureCard,
+          opacity: canOpen ? 1 : 0.5,
+          cursor: canOpen ? "pointer" : "not-allowed",
+        }}
+        onClick={() => {
+          if (canOpen) navigate(`/lecture/${item.lecture_id}`);
+        }}
+      >
+        📘 {item.lecture_name}
       </div>
     );
   }
+
+  if (isExam) {
+  return (
+    <div
+      key={item.exam_id}
+      style={{
+        ...lectureCard,
+        opacity: canOpenExam ? 1 : 0.5,
+        cursor: canOpenExam ? "pointer" : "not-allowed",
+      }}
+      onClick={() => {
+        if (canOpenExam) {
+          navigate(`/exam/${item.exam_id}`);
+        }
+      }}
+    >
+      📝 {item.exam_name}
+    </div>
+  );
+}
+
+  return null;
+})}
+        </div>
+      </div>
+    </div>
+  );
+}
 
   return (
     <div style={app}>
@@ -157,12 +242,19 @@ const handleLoadLecture = (course) => {
         <div style={courseList}>
           {courses.map((course) => {
             const progress = getProgress(course.course_id);
+            
+            const totalLectures = lectures.filter(
+              (l) => String(l.course_id) === String(course.course_id)
+            ).length;
+            
+            const percentage =
+            totalLectures > 0 ? (progress / totalLectures) * 100 : 0;
 
             return (
               <CourseCard
                 key={course.course_id}
                 course={course}
-                progress={progress}
+                progress={Math.round(percentage)} 
                 enrolled={enrolledCourses[course.course_id]}
                 onEnroll={handleEnroll}
                 onStart={() => handleLoadLecture(course)}

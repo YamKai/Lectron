@@ -4,7 +4,9 @@ export default function AdminViews(props) {
   form,
   setForm,
   taskForm,
+  questionForm,
   setTaskForm,
+  setQuestionForm,
   courses,
   
   handleSelectCourse,
@@ -16,18 +18,23 @@ export default function AdminViews(props) {
   selectedLecture,
   selectedTask,
   selectedExam,
+  selectedQuestion,
   lectures,
   tasks,
   exams,
+  questions,
   tempLectures,
   tempTasks,
   tempExams,
+  tempQuestions,
 
   setView,
   setSelectedLecture,
   setSelectedTask,
   setSelectedExam,
+  setSelectedQuestion,
   setTempTasks,
+  setTempQuestions,
 
   handleOpenLecture,
   handleAddLecture,
@@ -43,6 +50,11 @@ export default function AdminViews(props) {
   handleAddExam,
   handleUpdateExam,
   handleDeleteExam,
+
+  handleOpenQuestion,
+  handleAddQuestion,
+  handleUpdateQuestion,
+  handleDeleteQuestion,
 
 } = props;
 
@@ -141,7 +153,19 @@ setForm({
   <div key={i} style={s.lectureItem} onClick={()=>handleOpenExam(e)}>{e.exam_name}</div>
 ))}
 
-<button style={s.button} onClick={()=>{ setSelectedExam(null); setView("exam"); }}>+ Add Exam</button>
+<button style={s.button} onClick={()=>{ 
+  setSelectedExam(null); 
+  setTempQuestions([]);  
+  setForm({
+    ...form,
+    exam_name: "",
+    exam_description: "",
+    exam_index: "",
+  });
+
+  setView("exam"); 
+}}
+>+ Add Exam</button>
 
 <div style={s.actionsRow}>
   <div/>
@@ -244,6 +268,104 @@ setView("task"); }}>+ Add Task</button>
 </>
 )}
 
+{/* QUESTION */}
+{view === "question" && (
+<>
+  <button style={s.backBtn} onClick={()=>setView("exam")}>← Back</button>
+  <h2>{selectedQuestion ? "Edit Question" : "Add Question"}</h2>
+
+  <input
+    type="number"
+    value={questionForm.index || ""}
+    onChange={(e)=>setQuestionForm({...questionForm,index:e.target.value})}
+    placeholder="Question index"
+    style={s.inputModern}
+  />
+
+<select
+  value={questionForm.type || ""}
+  onChange={(e) =>
+    setQuestionForm({ ...questionForm, type: e.target.value })
+  }
+  style={s.inputModern}
+>
+  <option value="">Select type</option>
+  <option value="mcq">MCQ</option>
+  <option value="task">Task</option>
+</select>
+
+{questionForm.type === "mcq" && (
+  <>
+    <textarea
+  value={questionForm.question || ""}
+  onChange={(e)=>setQuestionForm({...questionForm,question:e.target.value})}
+  placeholder="Question text"
+  style={{
+    ...s.inputModern,
+    minHeight: 120,
+    resize: "vertical",
+    lineHeight: 1.5
+  }}
+/>
+
+    <input
+      value={questionForm.answer || ""}
+      onChange={(e)=>setQuestionForm({...questionForm,answer:e.target.value})}
+      placeholder="Correct answer"
+      style={s.inputModern}
+    />
+  </>
+)}
+
+{questionForm.type === "task" && (
+  <>
+    <textarea
+  value={questionForm.question || ""}
+  onChange={(e)=>setQuestionForm({...questionForm,question:e.target.value})}
+  placeholder="Task description"
+  style={{
+    ...s.inputModern,
+    minHeight: 120,
+    resize: "vertical",
+    lineHeight: 1.5
+  }}
+/>
+
+    <input
+      value={questionForm.answer || ""}
+      onChange={(e)=>setQuestionForm({...questionForm,answer:e.target.value})}
+      placeholder="Expected output"
+      style={s.inputModern}
+    />
+  </>
+)}
+
+ <div style={s.actionsRow}>
+  <div />
+  <div style={s.rightActions}>
+    {selectedQuestion ? (
+      <>
+        <button style={s.updateBtn} onClick={handleUpdateQuestion}>
+          Update
+        </button>
+
+        <button
+          style={s.deleteBtn}
+          onClick={() => handleDeleteQuestion(selectedQuestion)}
+        >
+          Delete
+        </button>
+      </>
+    ) : (
+      <button style={s.button} onClick={handleAddQuestion}>
+        +
+      </button>
+    )}
+  </div>
+</div>
+</>
+)}
+
 {/* EXAM */}
 {view === "exam" && (
 <>
@@ -265,23 +387,71 @@ placeholder="Exam index" style={s.inputModern}/>
   placeholder="Enter exam description" style={s.textareaModern}/></div>
 </div>
 
+<h4>Questions</h4>
+{(selectedExam?.exam_id ? questions : tempQuestions).map((q) => (  <div
+    key={q.question_id}
+    style={{
+      ...s.lectureItem,
+      display: "flex",
+      flexDirection: "column",
+      gap: 4
+    }}
+    onClick={() => handleOpenQuestion(q)}
+  >
+    
+   <div style={{ fontSize: 12, color: "#64748b" }}>
+  Question #{q.question_index ?? 0}
+</div>
+
+<div
+  style={{
+    fontSize: 14,
+    color: "#e2e8f0",
+    lineHeight: 1.5,
+  }}
+>
+  {q.question_data?.text || "No question"}
+</div>
+  </div>  
+))}
+
+<button
+  style={s.button}
+  onClick={() => {
+    setSelectedQuestion(null);
+    setQuestionForm({
+  question: "",
+  index: "",
+  answer: "",
+  type: "",
+});
+    setView("question");
+  }}
+>
+  + Add Question
+</button>
+
 <div style={s.actionsRow}>
   <div />
   <div style={s.rightActions}>
-    {!selectedExam ? (
-      <button style={s.button} onClick={handleAddExam}>
-        +
-      </button>
-    ) : (
-      <>
-        <button style={s.updateBtn} onClick={handleUpdateExam}>
-          Update
-        </button>
-        <button style={s.deleteBtn} onClick={handleDeleteExam}>
-          Delete
-        </button>
-      </>
-                        )}
+    {selectedExam ? (
+  <>
+    <button style={s.updateBtn} onClick={handleUpdateExam}>
+      Update
+    </button>
+
+    <button
+      style={s.deleteBtn}
+      onClick={handleDeleteExam}
+    >
+      Delete
+    </button>
+  </>
+) : (
+  <button style={s.button} onClick={handleAddExam}>
+    +
+  </button>
+)}
                       </div>
                     </div>
                   </>
