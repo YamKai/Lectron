@@ -1,22 +1,26 @@
-const { DockerRun, DockerRunInteractive, LANGUAGE_CONFIGS } = require('../utils/docker');
+const { DockerRun, DockerRunInteractive, killContainer, LANGUAGE_CONFIGS } = require('../utils/docker');
 const { writeTempFile, deleteTempFile } = require('../utils/fileManager');
 const supabase = require('../supabaseClient');
 
 const supported = Object.keys(LANGUAGE_CONFIGS);
-const maxCodeLength = parseInt(process.env.MAX_CODE_LENGTH || '100000', 10);
+const maxCodeLength = parseInt(process.env.MAX_CODE_LENGTH || '10000', 10);
+
+/* -- MAIN CHANGES FOR THIS COMMIT ------------------------------------------
+  added 'taskIndex' to be able to specify the eval of which task
+  added better cleanup, got rid of vulnerability, fixed timeout issue, process killing
+
+*/
 
 /* evaluation format:
-    eval: { "inputs": ["Alice", "30"], "expected": "Hello Alice, you are 30!", "output_only": true }
+    eval: { "inputs": ["Alice", "30"], "expected": "Hello Alice, you are 30!", "output_only": true, taskIndex: 0 }
 
   No input:
     eval: { "inputs": [], "expected": "Hello, world!" }
 
-  plain string also works (won't account for user inputs of course)
+  plain string also works (won't account for user inputs)
     eval: "Hello, world!"
 */
 
-
-// turning the eval into a structured object
 function parseEvaluation(raw) {
   try {
     const obj = JSON.parse(raw);
@@ -34,16 +38,7 @@ function parseEvaluation(raw) {
   }
 }
 
-// fetches the current eval for the current task based on session progress
-async function current_eval(sessionId, lectureId) {
-  const { data: session, error: sErr } = await supabase
-    .from('lecture_session')
-    .select('session_progress')
-    .eq('session_id', sessionId)
-    .maybeSingle();
-
-  if (sErr || !session) return null;
-
+async function current_eval(sessionId, lectureId, taskIndex) {
   const { data: tasks, error: tErr } = await supabase
     .from('task')
     .select('evaluation')
@@ -52,13 +47,27 @@ async function current_eval(sessionId, lectureId) {
 
   if (tErr || !tasks || tasks.length === 0) return null;
 
-  const progress = session.session_progress;
-  if (progress >= tasks.length) return null;
+  let effectiveIndex;
 
-  const evalData = parseEvaluation(tasks[progress].evaluation);
+  if (taskIndex !== undefined && taskIndex !== null) {
+    effectiveIndex = taskIndex;
+  } else {
+    const { data: session, error: sErr } = await supabase
+      .from('lecture_session')
+      .select('session_progress')
+      .eq('session_id', sessionId)
+      .maybeSingle();
+
+    if (sErr || !session) return null;
+    effectiveIndex = session.session_progress;
+  }
+
+  if (effectiveIndex < 0 || effectiveIndex >= tasks.length) return null;
+
+  const evalData = parseEvaluation(tasks[effectiveIndex].evaluation);
   if (!evalData) return null;
 
-  return { ...evalData, currentProgress: progress };
+  return { ...evalData, currentIndex: effectiveIndex };
 }
 
 // normalize and compare
@@ -86,7 +95,17 @@ async function handleWsExecute(ws, rawMessage) {
     return;
   }
 
-  const { code, language, sessionId, lectureId } = parsed;
+  const { code, language, sessionId, lectureId, directEvaluation } = parsed;
+
+  let taskIndex = parsed.taskIndex;
+  if (taskIndex !== undefined && taskIndex !== null) {
+    taskIndex = parseInt(taskIndex, 10);
+    if (!Number.isInteger(taskIndex) || taskIndex < 0) {
+      ws.send(JSON.stringify({ type: 'error', message: 'taskIndex must be a non-negative integer' }));
+      ws.close();
+      return;
+    }
+  }
 
   if (!language || !supported.includes(language)) {
     ws.send(JSON.stringify({ type: 'error', message: `Unsupported language. Supported: ${supported.join(', ')}` }));
@@ -104,24 +123,16 @@ async function handleWsExecute(ws, rawMessage) {
     return;
   }
 
-  const timeoutMs = parseInt(process.env.DOCKER_TIMEOUT_MS || '100000000', 10);
-  let tempFilePath = null;
+  const timeoutMs = parseInt(process.env.DOCKER_TIMEOUT_MS || '30000', 10);
+  let tempFilePath    = null;
   let evalTempFilePath = null;
-  let cleanedUp = false;
-  
+  let cleanedUp       = false;
 
-  // cleanup function used in several exit paths
   async function cleanup() {
     if (cleanedUp) return;
     cleanedUp = true;
-    if (tempFilePath) {
-      await deleteTempFile(tempFilePath);
-      tempFilePath = null;
-    }
-    if (evalTempFilePath) {
-      await deleteTempFile(evalTempFilePath);
-      evalTempFilePath = null;
-    }
+    if (tempFilePath) { await deleteTempFile(tempFilePath); tempFilePath = null; }
+    if (evalTempFilePath) { await deleteTempFile(evalTempFilePath); evalTempFilePath = null; }
   }
 
   function sendJson(obj) {
@@ -136,22 +147,48 @@ async function handleWsExecute(ws, rawMessage) {
     return;
   }
 
+  const MAX_OUTPUT_BYTES = parseInt(process.env.MAX_OUTPUT_BYTES || '51200', 10); // 50 KB
+
   let timedOut = false;
-  const proc = DockerRunInteractive(tempFilePath, language);
+  let outputBytes = 0;
+  let outputCapped = false;
+
+  const { proc, containerName } = DockerRunInteractive(tempFilePath, language);
 
   const timer = setTimeout(() => {
     timedOut = true;
+    killContainer(containerName);
     if (!proc.killed) proc.kill('SIGKILL');
   }, timeoutMs);
 
-  proc.stdout.on('data', (d) => sendJson({ type: 'stdout', data: d.toString() }));
-  proc.stderr.on('data', (d) => sendJson({ type: 'stderr', data: d.toString() }));
+  proc.stdout.on('data', (d) => {
+    if (outputCapped) return;
 
-  // forward user input to docker stdin
+    const chunk = d.toString();
+    outputBytes += Buffer.byteLength(chunk, 'utf8');
+
+    if (outputBytes > MAX_OUTPUT_BYTES) {
+      outputCapped = true;
+      sendJson({ type: 'stdout', data: chunk.slice(0, 200) });
+      sendJson({ type: 'stderr', data: '\n[Output limit reached — process killed]\n' });
+      clearTimeout(timer);
+      killContainer(containerName);
+      if (!proc.killed) proc.kill('SIGKILL');
+      return;
+    }
+
+    sendJson({ type: 'stdout', data: chunk });
+  });
+
+  proc.stderr.on('data', (d) => {
+    if (outputCapped) return;
+    sendJson({ type: 'stderr', data: d.toString() });
+  });
+
   ws.on('message', (msg) => {
     try {
       const m = JSON.parse(msg.toString());
-      if (m.type === 'input' && proc.stdin.writable) {
+      if (m.type === 'input' && !proc.killed && proc.stdin.writable) {
         proc.stdin.write(m.data);
       }
     } catch {}
@@ -159,6 +196,7 @@ async function handleWsExecute(ws, rawMessage) {
 
   ws.on('close', async () => {
     clearTimeout(timer);
+    killContainer(containerName);
     if (!proc.killed) proc.kill('SIGKILL');
     await cleanup();
   });
@@ -166,6 +204,7 @@ async function handleWsExecute(ws, rawMessage) {
   proc.on('error', async (err) => {
     clearTimeout(timer);
     sendJson({ type: 'error', message: `Docker error: ${err.message}` });
+    await killContainer(containerName);
     await cleanup();
     ws.close();
   });
@@ -180,7 +219,18 @@ async function handleWsExecute(ws, rawMessage) {
 
     sendJson({ type: 'exit', exitCode: exitCode ?? -1, timedOut });
 
-    if (!sessionId || !lectureId) {
+    if (timedOut) {
+      sendJson({ type: 'eval_result', passed: false, message: 'Execution timed out - task not evaluated' });
+      await cleanup();
+      ws.close();
+      return;
+    }
+
+    // Support directEvaluation for exam task questions (no lectureId needed)
+    const useDirectEval = directEvaluation !== undefined && directEvaluation !== null;
+
+    if (!useDirectEval && (!sessionId || !lectureId)) {
+      sendJson({ type: 'eval_result', passed: false, message: 'No session context - task not evaluated' });
       await cleanup();
       ws.close();
       return;
@@ -191,7 +241,9 @@ async function handleWsExecute(ws, rawMessage) {
     //
 
     try {
-      const evalData = await current_eval(sessionId, lectureId);
+      const evalData = useDirectEval
+        ? parseEvaluation(typeof directEvaluation === 'string' ? directEvaluation : JSON.stringify(directEvaluation))
+        : await current_eval(sessionId, lectureId, taskIndex);
 
       if (!evalData || evalData.expected === null) {
         sendJson({ type: 'eval_result', passed: false, message: 'No evaluation found for current task' });
@@ -200,7 +252,6 @@ async function handleWsExecute(ws, rawMessage) {
         return;
       }
 
-      // making sure the number of input()s matches the eval
       const codeInputCallCount = (code.match(/\binput\s*\(/g) || []).length;
       if (codeInputCallCount !== evalData.inputCount) {
         sendJson({
@@ -221,6 +272,7 @@ async function handleWsExecute(ws, rawMessage) {
         evalTempFilePath = await writeTempFile(promptSuppressorPatch + code, language);
         fileToRun = evalTempFilePath;
       }
+      // tba js condition here
 
       // re-run with the predefined inputs piped to stdin
       const result = await DockerRun(fileToRun, language, evalData.inputs);
@@ -235,17 +287,26 @@ async function handleWsExecute(ws, rawMessage) {
       const passed = compareOutput(result.stdout, evalData);
 
       if (passed) {
-        const { data: freshSession } = await supabase
-          .from('lecture_session')
-          .select('session_progress')
-          .eq('session_id', sessionId)
-          .maybeSingle();
-
-        if (freshSession) {
-          await supabase
+        // Only update lecture_session progress for lecture tasks, not exam tasks
+        if (!useDirectEval && sessionId) {
+          const { data: freshSession } = await supabase
             .from('lecture_session')
-            .update({ session_progress: freshSession.session_progress + 1 })
-            .eq('session_id', sessionId);
+            .select('session_progress')
+            .eq('session_id', sessionId)
+            .maybeSingle();
+
+          if (freshSession) {
+            const effectiveIndex = (taskIndex !== undefined && taskIndex !== null)
+              ? taskIndex
+              : freshSession.session_progress;
+
+            if (effectiveIndex === freshSession.session_progress) {
+              await supabase
+                .from('lecture_session')
+                .update({ session_progress: freshSession.session_progress + 1 })
+                .eq('session_id', sessionId);
+            }
+          }
         }
 
         sendJson({ type: 'eval_result', passed: true });
