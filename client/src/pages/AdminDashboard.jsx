@@ -67,7 +67,7 @@ const [view, setView] = useState("none");
 
 const loadTasks = async (lectureId) => {
   try {
-    const res = await tasksApi.get(`belongto/${lectureId}`);
+    const res = await tasksApi.get(`getByLecture/${lectureId}`);
     const data = res?.data || res;
 
     console.log("TASKS:", data);

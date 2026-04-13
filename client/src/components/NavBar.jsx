@@ -1,7 +1,9 @@
 import { useAuth } from "../context/AuthContext";
 import { signOut } from "../auth";
+import { useLocation } from "react-router-dom";
 
 function NavBar() {
+  const location = useLocation();
     const { dbUser } = useAuth();
     const handleSignOut = async () => {
         await signOut();
@@ -9,6 +11,7 @@ function NavBar() {
 
   
   return (
+    console.log(dbUser),
     <>
       <nav style={styles.navbar}>
         <img src="/Logo.png" alt="logo" style={styles.logo} />
@@ -18,10 +21,10 @@ function NavBar() {
             alt="avatar"
             style={styles.avatar}
           />
-
           <span style={styles.username}>
             {dbUser?.user_name}
           </span>
+          {location.pathname !== "/admin" ? dbUser?.admin_role && (<a href="/admin" style={styles.button_admin}>Admin</a>) : <a href="/app" style={styles.button_admin}>App</a>}
           <button onClick={handleSignOut} style={styles.button}>
           Sign out
         </button>
@@ -81,6 +84,16 @@ const styles = {
 
   button: {
     backgroundColor: "#ef4444",
+    border: "none",
+    color: "white",
+    padding: "3px 5px",
+    borderRadius: "6px",
+    cursor: "pointer",
+    fontSize: "12px",
+},
+
+button_admin: {
+    background: "linear-gradient(90deg, #47d1ff, #7253ff)",
     border: "none",
     color: "white",
     padding: "3px 5px",

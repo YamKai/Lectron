@@ -4,9 +4,11 @@ import { coursesApi } from "../api/data/course";
 import { lecturesApi } from "../api/data/lecture";
 import { enrollmentsApi } from "../api/data/enrollment";
 import CourseCard from "../components/main-dashboard/CourseCard";
+import { useNavigate } from "react-router-dom";
 
 export default function MainDashboard() {
   const { dbUser } = useAuth();
+  const navigate = useNavigate();
 
   const [courses, setCourses] = useState([]);
   const [lectures, setLectures] = useState([]);
@@ -76,9 +78,22 @@ export default function MainDashboard() {
     }));
   };
 
-const handleStart = () => {};
+const handleLoadLecture = (course) => {
+  const progress = getProgress(course.course_id);
+  const toLecture = lectures.find(
+    (l) =>
+      String(l.course_id) === String(course.course_id) &&
+      Number(l.lecture_index) === progress + 1
+  );
 
-const handleContinue = () => {};
+  if (!toLecture) {
+    console.error(`No lecture with index ${progress + 1} found`);
+    return null;
+  } else {
+    navigate(`/lecture/${toLecture.lecture_id}`);
+  }
+
+};
   
   const handleCardClick = (course) => {
   const fullCourse = courses.find(
@@ -88,8 +103,7 @@ const handleContinue = () => {};
   setSelectedCourse(fullCourse);
 
     const list = lectures.filter(
-      (l) => String(l.course_id) === String(course.course_id)
-    );
+      (l) => String(l.course_id) === String(course.course_id)).sort((a, b) => a.lecture_index - b.lecture_index);
 
     setCourseLectures(list);
     setView("course");
@@ -151,8 +165,8 @@ const handleContinue = () => {};
                 progress={progress}
                 enrolled={enrolledCourses[course.course_id]}
                 onEnroll={handleEnroll}
-                onStart={handleStart}
-                onContinue={handleContinue}
+                onStart={() => handleLoadLecture(course)}
+                onContinue={() => handleLoadLecture(course)}
                 onCardClick={handleCardClick} 
               />
             );

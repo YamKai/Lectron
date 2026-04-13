@@ -7,7 +7,6 @@ export const syncUser = async (authUser) => {
     user_id: authUser.id,
     email: authUser.email,
     user_name: authUser.user_metadata?.name || authUser.user?.user_metadata?.full_name || "Unknown",
-    admin_role: false,
     avatar_url: authUser.user_metadata?.avatar_url || null,
   };
 
