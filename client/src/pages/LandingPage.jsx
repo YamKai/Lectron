@@ -156,7 +156,7 @@ function LandingPage({onLogin}) {
                 style={{
                     position: "absolute",
                     top: "-109.1%",
-                    left: "-43vw",
+                    left: "-44vw",
                     width: "100%",
                     height: "auto",
                     objectFit: "none",
