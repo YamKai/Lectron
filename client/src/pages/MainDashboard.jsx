@@ -186,8 +186,8 @@ const percentage = totalLectures > 0
   const isExam = item.exam_id;
 
   const index = item.lecture_index ?? item.exam_index;
-const canOpen = isEnrolled && index <= progress + 1;
-const canOpenExam = isEnrolled && progress === item.exam_index - 1;
+  const canOpen = isEnrolled && index <= progress + 1;
+  const canOpenExam = isEnrolled && progress === item.exam_index + 1;
   if (isLecture) {
     return (
       <div
