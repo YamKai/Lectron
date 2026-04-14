@@ -1,3 +1,5 @@
+import { useState } from "react";
+
 export default function CourseCard({
   course,
   progress,
@@ -7,21 +9,27 @@ export default function CourseCard({
   onContinue,
   onCardClick,
   totalLessons,
-}) {
+})
+{
+  const [hovered, setHovered] = useState(false);
+
+  const handleHover = (e, enter) => {
+    setHovered(enter);
+
+    e.currentTarget.style.transform = enter
+      ? "translateY(-8px) scale(1.02)"
+      : "translateY(0)";
+
+    e.currentTarget.style.boxShadow = enter
+      ? "0 0 60px rgba(99,102,241,0.3)"
+      : "0 0 30px rgba(99,102,241,0.2)";
+  };
   return (
     <div
       style={{ ...card, position: "relative" }}
       onClick={() => onCardClick(course)}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.transform = "translateY(-8px) scale(1.02)";
-        e.currentTarget.style.boxShadow =
-          "0 0 60px rgba(99,102,241,0.3)";
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.transform = "translateY(0)";
-        e.currentTarget.style.boxShadow =
-          "0 0 30px rgba(99,102,241,0.2)";
-      }}
+      onMouseEnter={(e) => handleHover(e, true)}
+      onMouseLeave={(e) => handleHover(e, false)}
     >
       <div
         style={{
@@ -69,6 +77,8 @@ export default function CourseCard({
               e.stopPropagation();
               onEnroll(course);
             }}
+      onMouseEnter={(e) => handleHover(e, true)}
+      onMouseLeave={(e) => handleHover(e, false)}
           >
             Enroll
           </button>
@@ -81,6 +91,8 @@ export default function CourseCard({
               e.stopPropagation();
               progress > 0 ? onContinue(course) : onStart(course);
             }}
+      onMouseEnter={(e) => handleHover(e, true)}
+      onMouseLeave={(e) => handleHover(e, false)}
           >
             {progress > 0 ? "Resume Learning" : "Start Course"}
           </button>
@@ -196,24 +208,25 @@ const baseBtn = {
 
 const enrollBtn = {
   ...baseBtn,
-  background: "transparent",
+  background: "rgba(0, 132, 255, 0.12)",
   border: "1px solid rgba(255,255,255,0.1)",
-  color: "#94a3b8",
+  color: "#a6c9fb",
 };
 
 const startBtn = {
   ...baseBtn,
-  background: "rgba(255,255,255,0.04)",
+  background: "rgba(170, 0, 255, 0.12)",
   border: "1px solid rgba(255,255,255,0.08)",
   color: "#e2e8f0",
 };
 const continueBtn = {
   ...baseBtn,
-  background: "rgba(99,102,241,0.12)",
+  background: "rgba(99,102,241,0.22)",
   border: "1px solid rgba(99,102,241,0.35)",
   color: "#c7d2fe",
   backdropFilter: "blur(6px)",
 };
+
 
 const titleText = {
   fontSize: 18,

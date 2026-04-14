@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useRef, useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { coursesApi } from "../api/data/course";
 import { lecturesApi } from "../api/data/lecture";
@@ -8,6 +8,21 @@ import CourseCard from "../components/main-dashboard/CourseCard";
 import { useNavigate } from "react-router-dom";
 
 export default function MainDashboard() {
+
+  const [hovered, setHovered] = useState(false);
+
+  const handleHover = (e, enter) => {
+    setHovered(enter);
+
+    e.currentTarget.style.transform = enter
+      ? "translateY(-8px) scale(1.02)"
+      : "translateY(0)";
+
+    e.currentTarget.style.boxShadow = enter
+      ? "0 0 60px rgba(99,102,241,0.3)"
+      : "0 0 30px rgba(99,102,241,0.2)";
+  };
+
   const { dbUser } = useAuth();
   const navigate = useNavigate();
 
@@ -186,12 +201,18 @@ const [openMenu, setOpenMenu] = useState(false);
                 <div
                   key={item.lecture_id || item.exam_id}
                   style={{
+                    transition: "all 0.25s ease",
                     ...lectureCard,
                     opacity: canOpen ? 1 : 0.4,
                     border: isCurrent
                       ? "1px solid #3b82f6"
                       : "1px solid transparent",
+                      background: (item.lecture_id)
+                      ? lectureCard.background
+                      : "rgba(47, 28, 83, 0.54)",
                   }}
+                      onMouseEnter={(e) => handleHover(e, true)}
+                      onMouseLeave={(e) => handleHover(e, false)}
                   onClick={() => {
                     if (!canOpen) return;
 
@@ -200,7 +221,7 @@ const [openMenu, setOpenMenu] = useState(false);
                     else navigate(`/exam/${item.exam_id}`);
                   }}
                 >
-            
+                  {item.lecture_id ? "Lecture: " : "Exam: "}
                   {item.lecture_name || item.exam_name}
                 </div>
               );
@@ -260,11 +281,25 @@ if (view === "myCourses") {
  /* ---------------- DASHBOARD ---------------- */
 
 const displayName =
-  dbUser?.name?.split(" ")[0] ||
-  dbUser?.full_name?.split(" ")[0] ||
-  dbUser?.username ||
-  dbUser?.email?.split("@")[0] ||
+  dbUser?.user_name ||
   "Learner";
+const hasCourses = Object.keys(enrolledCourses).length > 0;
+
+const dropdownRef = useRef(null);
+
+useEffect(() => {
+  const close = (e) => {
+    if (!dropdownRef.current) return;
+
+    if (!dropdownRef.current.contains(e.target)) {
+      setOpenMenu(false);
+    }
+  };
+
+  document.addEventListener("mousedown", close);
+
+  return () => document.removeEventListener("mousedown", close);
+}, []);
 
 return (
   <div style={app}>
@@ -274,47 +309,57 @@ return (
       <div style={hero}>
         <div>
           <h1 style={heroTitle}>
-            Welcome back, {displayName}
+            {hasCourses
+    ? `Welcome back, ${displayName}`
+    : `Welcome to Lectron, ${displayName}`}
           </h1>
 
           <p style={heroSubtitle}>
-  Pick up where you left off
+  {hasCourses
+    ? "Pick up where you left off"
+    : "Enroll in your first course to start your learning journey"}
 </p>
 
-<div style={{ position: "relative", marginTop: 16 }}>
-  <button
-    style={heroBtn}
-    onClick={() => setOpenMenu((prev) => !prev)}
-  >
+<div ref={dropdownRef} style={{ position: "relative", marginTop: 16 }}>
+  {hasCourses && (
+    <button
+      style={heroBtn}
+      onClick={() => setOpenMenu((prev) => !prev)}
+      onMouseEnter={(e) => handleHover(e, true)}
+      onMouseLeave={(e) => handleHover(e, false)}
+    >
     Continue 
-  </button>
+  </button>)}
 
-  {openMenu && (
-    <div style={dropdown}>
-      {courses
-        .filter((c) => enrolledCourses[c.course_id])
-        .map((course) => (
-          <div
-            key={course.course_id}
-            style={courseSquare}
-            onClick={() => {
-              handleCardClick(course);
-              setOpenMenu(false);
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.filter = "grayscale(0%)";
-              e.currentTarget.style.transform = "scale(1.05)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.filter = "grayscale(100%)";
-              e.currentTarget.style.transform = "scale(1)";
-            }}
-          >
-            <img src={course.logo} style={squareIcon} />
-          </div>
-        ))}
-    </div>
-  )}
+    {hasCourses && ( <div
+  style={{
+    ...dropdown,
+    ...(openMenu ? dropdownOpen : dropdownClosed),
+  }}
+>
+  {courses
+    .filter((c) => enrolledCourses[c.course_id])
+    .map((course) => (
+      <div
+        key={course.course_id}
+        style={courseSquare}
+        onClick={() => {
+          handleCardClick(course);
+          setOpenMenu(false);
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.filter = "grayscale(0%)";
+          e.currentTarget.style.transform = "scale(1.05)";
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.filter = "grayscale(100%)";
+          e.currentTarget.style.transform = "scale(1)";
+        }}
+      >
+        <img src={course.logo} style={squareIcon} />
+      </div>
+    ))}
+</div>)}
 </div>
         </div>
       </div>
@@ -475,6 +520,7 @@ const heroBtn = {
   background: "linear-gradient(135deg,#3b82f6,#8b5cf6)",
   color: "#fff",
   cursor: "pointer",
+  transition: "all 0.35s ease"
 };
 
 const sectionHeader = {
@@ -521,6 +567,19 @@ const dropdown = {
   gridTemplateColumns: "repeat(3, 1fr)", 
   gap: 10,
   zIndex: 100,
+  transition: "all 0.25s ease",
+};
+
+const dropdownOpen = {
+  opacity: 1,
+  transform: "translateY(0) scale(1)",
+  pointerEvents: "auto",
+};
+
+const dropdownClosed = {
+  opacity: 0,
+  transform: "translateY(-8px) scale(0.96)",
+  pointerEvents: "none",
 };
 
 const courseSquare = {
