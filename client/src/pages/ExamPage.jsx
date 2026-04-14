@@ -311,10 +311,24 @@ function ExamPage() {
   // -- Results screen (shown when exam is done) --
   if (results !== null || isCompleted) {
     const displayResults = results ?? session.user_result;
-
-    return (
-      <div style={{ padding: "40px 48px", width: "100%", maxWidth: "1200px", margin: "0 auto", display: "flex", flexDirection: "column", gap: "28px", boxSizing: "border-box" }}>
-
+return (
+  <div
+    style={{
+      minHeight: "100vh",
+      width: "100%",
+      background: `
+        radial-gradient(circle at 15% 20%, rgba(168,85,247,0.14) 0%, transparent 50%),
+        radial-gradient(circle at 85% 30%, rgba(59,130,246,0.14) 0%, transparent 50%),
+        radial-gradient(circle at 50% 80%, rgba(147,51,234,0.12) 0%, transparent 60%),
+        #01020d
+      `,
+      padding: "40px 48px",
+      boxSizing: "border-box",
+      display: "flex",
+      flexDirection: "column",
+      gap: "28px",
+    }}
+  >
         <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
           <h2 style={{ margin: 0 }}>{exam.exam_name} — Results</h2>
           {displayResults && (
@@ -362,9 +376,24 @@ function ExamPage() {
   const isMCQ = currentQuestion.question_type === "mcq";
   const isLastQuestion = currentIndex === totalQuestions - 1;
 
-  return (
-    <div style={{ padding: "32px 48px", width: "100%", maxWidth: "1200px", margin: "0 auto", display: "flex", flexDirection: "column", gap: "24px", boxSizing: "border-box" }}>
-
+ return (
+  <div
+    style={{
+      minHeight: "100vh",
+      width: "100%",
+      background: `
+        radial-gradient(circle at 15% 20%, rgba(168,85,247,0.14) 0%, transparent 50%),
+        radial-gradient(circle at 85% 30%, rgba(59,130,246,0.14) 0%, transparent 50%),
+        radial-gradient(circle at 50% 80%, rgba(147,51,234,0.12) 0%, transparent 60%),
+        #01020d
+      `,
+      padding: "32px 48px",
+      boxSizing: "border-box",
+      display: "flex",
+      flexDirection: "column",
+      gap: "24px",
+    }}
+  >
       {/* Header */}
       <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
         <button onClick={() => navigate(AFTER_LECTURE_PATH)} style={{ padding: "3px 10px", fontSize: "0.82em" }}>
@@ -377,7 +406,8 @@ function ExamPage() {
       </div>
 
       {/* Question card */}
-      <div style={{ background: "#12121f", padding: "20px", borderRadius: "8px", border: "1px solid #2a2a3a", display: "flex", flexDirection: "column", gap: "16px", width: "100%", boxSizing: "border-box" }}>
+      <div style={{ background:
+  "linear-gradient(135deg, rgba(59,130,246,0.10), rgba(139,92,246,0.05))", padding: "20px", borderRadius: "8px", border: "1px solid rgba(139,92,246,0.14)", display: "flex", flexDirection: "column", gap: "16px", width: "100%", boxSizing: "border-box" }}>
         {isMCQ ? (
           <ExamMCQQuestion
             key={currentQuestion.question_id}

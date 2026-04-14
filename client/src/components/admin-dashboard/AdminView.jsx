@@ -507,28 +507,9 @@ placeholder="Exam index" style={s.inputModern}/>
   </div>               
               
 {selectedUser && (
-   <div
-    style={{
-      position: "fixed",
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      background: "rgba(0,0,0,0.7)",
-      display: "flex",
-      justifyContent: "center",
-      alignItems: "center",
-      zIndex: 999,
-    }}
-  >         
-    <div
-      style={{
-        background: "#020617",
-        padding: 20,
-        borderRadius: 12,
-        width: 420,
-      }}
-    >
+  <div style={s.popupOverlay}>
+    <div style={s.popupContainer}>
+      
       <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20 }}>
         <img
           src={selectedUser.avatar_url}
@@ -550,80 +531,72 @@ placeholder="Exam index" style={s.inputModern}/>
           </div>
         </div>
       </div>
-      
-    <h4 style={{ marginBottom: 10 }}>Enrollments</h4>
-     {userEnrollments?.map((e) => {
-      const progressCount = Number(e.course_progress ?? 0);
-      const totalLectures = allLectures.filter(
-          (l) => String(l.course_id) === String(e.course_id)).length;
-      const progress =
-      totalLectures > 0 ? Math.round((progressCount / totalLectures) * 100): 0;
 
-      return (
-      <div
-      key={e.course_id}
-      style={{
-        background: "#030b1d",
-        padding: 12,
-        borderRadius: 10,
-        marginBottom: 10,
-      }}
-    >
-      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-        {e.course_logo && (
-          <img
-      src={e.course_logo}
-      alt=""
-      style={{
-        width: 30,
-        height: 30,
-        objectFit: "contain",
-      }}
-    />
-  )}
+      <h4 style={{ marginBottom: 10 }}>Enrollments</h4>
 
-  <div style={{ fontWeight: 500 }}>
-    {e.course_name || "Course"}
-  </div>
-</div>
+      {userEnrollments?.map((e) => {
+        const progressCount = Number(e.course_progress ?? 0);
 
-      <div style={{ fontSize: 12, color: "#94a3b8", marginTop: 4 }}>
-        Progress: {progress}%
-      </div>
-       <div
-        style={{
-          height: 4,                    
-          background: "#171330",  
-          borderRadius: 10,
-          marginTop: 8,
-        }}
-      >
-        <div
-          style={{
-            width: `${progress}%`,
-            height: "100%",
-            background: "linear-gradient(90deg,#3b82f6,#8e39e3,#3b82f6)",
-            borderRadius: 10,
-            transition: "width 0.4s ease", 
-          }}
-        />
-      </div>
-    </div>
-  );
-})}
+        const totalLectures = allLectures.filter(
+          (l) => String(l.course_id) === String(e.course_id)
+        ).length;
 
-      <button
-        style={{
-          marginTop: 10,
-          padding: "8px 16px",
-          borderRadius: 8,
-          background: "#020a17",
-          color: "#fff",
-          border: "1px solid #334155",
-          cursor: "pointer",
-        }}
-        onClick={() => setSelectedUser(null)}
-      >
+        const progress =
+          totalLectures > 0
+            ? Math.round((progressCount / totalLectures) * 100)
+            : 0;
+
+        return (
+          <div
+            key={e.course_id}
+            style={{
+              background: "rgba(255,255,255,0.04)",
+              border: "1px solid rgba(255,255,255,0.06)",
+              padding: 12,
+              borderRadius: 12,
+              marginBottom: 10,
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              {e.course_logo && (
+                <img
+                  src={e.course_logo}
+                  style={{ width: 30, height: 30 }}
+                />
+              )}
+
+              <div style={{ fontWeight: 500 }}>
+                {e.course_name}
+              </div>
+            </div>
+
+            <div style={{ fontSize: 12, color: "#94a3b8", marginTop: 6 }}>
+              Progress: {progress}%
+            </div>
+
+            <div
+              style={{
+                height: 6,
+                background: "rgba(255,255,255,0.08)",
+                borderRadius: 999,
+                marginTop: 8,
+              }}
+            >
+              <div
+                style={{
+                  width: `${progress}%`,
+                  height: "100%",
+                  background:
+                    "linear-gradient(90deg,#6366f1,#8b5cf6)",
+                  borderRadius: 999,
+                }}
+              />
+            </div>
+          </div>
+        );
+      })}
+
+      <button style={s.backBtn} onClick={() => setSelectedUser(null)}>
         Close
       </button>
     </div>
@@ -633,35 +606,168 @@ placeholder="Exam index" style={s.inputModern}/>
 );
 }
 
-  /*  STYLES  */
-  const s = {
-    app: { height:"100vh", width:"100%", background:"radial-gradient(circle at 20% 0%, #000000, #00082e)", color:"#fff" },
+/*  STYLES  */
+const s = {
+app: {
+  minHeight: "100vh",
+  width: "100%",
+  background: `
+  radial-gradient(circle at 15% 20%, rgba(168,85,247,0.18) 0%, transparent 40%),
+  radial-gradient(circle at 85% 30%, rgba(59,130,246,0.18) 0%, transparent 40%),
+  radial-gradient(circle at 50% 80%, rgba(147,51,234,0.15) 0%, transparent 50%),
+  #01020d
+`,
+  color: "#fff",
+},
     layout: { display:"flex", height:"100%", width:"100%" },
-    sidebar: { width:280, padding:24, background:"#020617", borderRight:"1px solid rgba(255,255,255,0.05)" },
-    panel: { flex:1, padding:"40px 60px", overflowY:"auto" },
+sidebar: {
+  width: 300,
+  padding: 20,
+  background: "rgba(255,255,255,0.03)",
+  backdropFilter: "blur(12px)",
+  borderRight: "1px solid rgba(255,255,255,0.08)",
+},
 
-    fullForm: { width:"100%", maxWidth:900, margin:"0 auto", background:"rgba(3, 0, 19, 0.7)", padding:40, borderRadius:20 },
+panel: { 
+  flex:1, padding:"40px 60px", overflowY:"auto" 
+},
 
-    card: { display:"flex", alignItems:"center", height:110, borderRadius:14, marginBottom:14, cursor:"pointer", overflow:"hidden", background:"linear-gradient(135deg,#1c1e2e,#020617)", border:"1px solid #1f2937" },
-    activeCard: { border:"1px solid #3b82f6" },
-    addCard: { display: "flex", alignItems: "center", height: 110, borderRadius: 14, marginBottom: 14, cursor: "pointer", overflow: "hidden", background: "linear-gradient(135deg,#1c1e2e,#020617)", border: "1px dashed #374151", color: "#9ca3af", transition: "all 0.2s ease"},
+fullForm: {
+  width: "100%",
+  maxWidth: 900,
+  margin: "0 auto",
+  background:
+    "linear-gradient(135deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02))",
+  backdropFilter: "blur(16px)",
+  padding: 40,
+  borderRadius: 20,
+  border: "1px solid rgba(255,255,255,0.08)",
+},
+
+card: {
+  display: "flex",
+  alignItems: "center",
+  height: 100,
+  borderRadius: 18,
+  marginBottom: 14,
+  cursor: "pointer",
+  overflow: "hidden",
+background:
+  "linear-gradient(135deg, rgba(59,130,246,0.10), rgba(139,92,246,0.05))",
+backdropFilter: "blur(16px)",
+border: "1px solid rgba(139,92,246,0.14)",
+  boxShadow:
+  "0 0 50px rgba(99,102,241,0.22), inset 0 0 12px rgba(255,255,255,0.04)",
+  transition: "all 0.3s ease",
+},
+
+activeCard: {
+  border: "1px solid rgba(99,102,241,0.4)",
+  boxShadow: "0 0 25px rgba(99,102,241,0.25)",
+},    
+
+addCard: { 
+  display: "flex", alignItems: "center", height: 110, borderRadius: 14, marginBottom: 14, cursor: "pointer", overflow: "hidden", background: "linear-gradient(135deg,#1c1e2e,#020617)", border: "1px dashed #374151", color: "#9ca3af", transition: "all 0.2s ease"
+},
     
-    cardLeft: { display:"flex", alignItems:"center", width:"100%" },
-    cardAccent: { width: 110, background: "linear-gradient(135deg,#26104f,#1c1e2e)", display: "flex", alignItems: "center", justifyContent: "center",},
-    contentLeft: { padding:"7px 17px", flex:1 },
+cardLeft: { 
+  display:"flex", alignItems:"center", width:"100%" 
+},
 
-    sidebarIcon: { width:65, height:110, objectFit:"contain" },
-    headerIcon: { width:70, height:70, objectFit:"contain" },
+cardAccent: {
+  width: 110,
+  background: `
+    radial-gradient(circle at 30% 30%, rgba(139,92,246,0.18), transparent 70%),
+    radial-gradient(circle at 70% 70%, rgba(124,58,237,0.12), transparent 70%),
+    #01030f
+  `,
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+},
 
-    input: { width:"100%", padding:"12px", marginTop:12, background:"#020617", color:"#fff", border:"1px solid #1f2937", borderRadius:8 },
-    textarea: { width:"100%", padding:"12px", marginTop:12, background:"#020617", color:"#fff", border:"1px solid #1f2937", borderRadius:8, minHeight:80 },
+contentLeft: { 
+  padding:"7px 17px", flex:1 
+},
 
-    button: { margin: "10px 0", padding:"4px 20px", background:"#1b1725", border:"1px solid #1f2937", color:"#cbd5f5", borderRadius:20, cursor:"pointer" },
-    updateBtn: { padding:"10px 16px", border:"1px solid #14532d", color:"#4ade80", borderRadius:20, cursor:"pointer" },
-    deleteBtn: { padding:"10px 16px", border:"1px solid #7f1d1d", color:"#f87171", borderRadius:20, cursor:"pointer" },
-    backBtn: { padding:"8px 14px", border:"1px solid #1f2937", color:"#9ca3af", borderRadius:20, cursor:"pointer" },
+sidebarIcon: {
+  width:65, height:110, objectFit:"contain" 
+},
 
-    lectureItem: { padding:"12px", marginTop:10, background:"#110f2a", borderRadius:10, cursor:"pointer" },
+headerIcon: { 
+width:70, height:70, objectFit:"contain" 
+},
+
+  input: {
+  width: "100%",
+  padding: "12px",
+  marginTop: 12,
+  background: "rgba(255,255,255,0.04)",
+  color: "#fff",
+  border: "1px solid rgba(255,255,255,0.08)",
+  borderRadius: 10,
+},
+
+textarea: {
+  width: "100%",
+  padding: "12px",
+  marginTop: 12,
+  background: "rgba(255,255,255,0.04)",
+  color: "#fff",
+  border: "1px solid rgba(255,255,255,0.08)",
+  borderRadius: 10,
+  minHeight: 80,
+},
+button: {
+  padding: "10px 18px",
+  borderRadius: 12,
+  cursor: "pointer",
+  fontWeight: 500,
+  background: "rgba(99,102,241,0.12)",
+  border: "1px solid rgba(99,102,241,0.35)",
+  color: "#c7d2fe",
+  boxShadow: "0 0 25px rgba(99,102,241,0.4)",
+  transition: "all 0.25s ease",
+},
+updateBtn: {
+  padding: "10px 18px",
+  borderRadius: 12,
+  cursor: "pointer",
+  fontWeight: 500,
+background: "rgba(255,255,255,0.04)",
+  border: "1px solid rgba(255,255,255,0.08)",
+  color: "#e2e8f0",  boxShadow: "0 0 20px rgba(34,197,94,0.4)",
+  transition: "all 0.25s ease",
+},
+deleteBtn: {
+  padding: "10px 18px",
+  borderRadius: 12,
+  background: "rgba(239,68,68,0.08)",
+  border: "1px solid rgba(239,68,68,0.4)",
+  color: "#f87171",
+  fontWeight: 500,
+  cursor: "pointer",
+  transition: "all 0.25s ease",
+},
+
+backBtn: {
+  padding: "8px 14px",
+  borderRadius: 10,
+  background: "rgba(255,255,255,0.04)",
+  border: "1px solid rgba(255,255,255,0.08)",
+  color: "#94a3b8",
+  cursor: "pointer",
+},
+
+lectureItem: {
+  padding: "12px",
+  marginTop: 10,
+  background: "rgba(255,255,255,0.04)",
+  borderRadius: 12,
+  border: "1px solid rgba(255,255,255,0.06)",
+  transition: "all 0.2s ease",
+  cursor: "pointer",
+},
 
     actionsRow: { marginTop:40, display:"flex", justifyContent:"space-between" },
     rightActions: { display:"flex", gap:10 },
@@ -670,4 +776,31 @@ placeholder="Exam index" style={s.inputModern}/>
     formField: { display:"flex", flexDirection:"column" },
     inputModern: { width:"100%", padding:"10px", background:"#0f172a", color:"#fff", border:"1px solid #1f2937", borderRadius:6 },
     textareaModern: { width:"100%", padding:"10px", background:"#0f172a", color:"#fff", border:"1px solid #1f2937", borderRadius:6, minHeight:120 },
+  
+ popupOverlay: {
+  position: "fixed",
+  inset: 0,
+  background: "rgba(0,0,0,0.4)",
+  backdropFilter: "blur(8px)",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  zIndex: 1000,
+},
+
+popupContainer: {
+  width: 420,
+  padding: 24,
+  borderRadius: 20,
+
+  background: `
+    radial-gradient(circle at 15% 20%, rgba(168,85,247,0.18) 0%, transparent 40%),
+    radial-gradient(circle at 85% 30%, rgba(59,130,246,0.18) 0%, transparent 40%),
+    radial-gradient(circle at 50% 80%, rgba(147,51,234,0.15) 0%, transparent 50%),
+    #01020d
+  `,
+
+  border: "1px solid rgba(255,255,255,0.08)",
+  boxShadow: "0 0 60px rgba(99,102,241,0.25)",
+},
   };

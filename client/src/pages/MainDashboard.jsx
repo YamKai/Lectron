@@ -17,7 +17,8 @@ export default function MainDashboard() {
   const [enrolledCourses, setEnrolledCourses] = useState({});
   const [courseProgress, setCourseProgress] = useState({});
 
-  const [view, setView] = useState("dashboard");
+const [view, setView] = useState("dashboard");
+const [openMenu, setOpenMenu] = useState(false);
   const [selectedCourse, setSelectedCourse] = useState(null);
   const [courseLectures, setCourseLectures] = useState([]);
 
@@ -33,7 +34,6 @@ export default function MainDashboard() {
       const coursesData = c?.data || c || [];
       const lecturesData = l?.data || l || [];
       const examsData = ex?.data || ex || [];
-
       const enrollmentsData = e?.data || e || [];
 
       setCourses(coursesData);
@@ -59,9 +59,7 @@ export default function MainDashboard() {
 
   if (!dbUser) return <div>Loading...</div>;
 
-  const getProgress = (courseId) => {
-    return courseProgress[courseId] || 0;
-  };
+  const getProgress = (courseId) => courseProgress[courseId] || 0;
 
   const handleEnroll = async (course) => {
     if (!dbUser?.user_id) return;
@@ -84,75 +82,68 @@ export default function MainDashboard() {
     }));
   };
 
-const handleLoadLecture = (course) => {
-  const progress = getProgress(course.course_id);
-
-  const lectureList = lectures.filter(
-    (l) => String(l.course_id) === String(course.course_id)
-  );
-
-  const examList = exams.filter(
-    (e) => String(e.course_id) === String(course.course_id)
-  );
-
-  const merged = [...lectureList, ...examList].sort((a, b) => {
-    const indexA = a.lecture_index ?? a.exam_index;
-    const indexB = b.lecture_index ?? b.exam_index;
-    return indexA - indexB;
-  });
-
-  const nextItem = merged.find((item) => {
-    const index = item.lecture_index ?? item.exam_index;
-    return index === progress + 1;
-  });
-
-  if (!nextItem) {
-    console.log("Course completed");
-    return;
-  }
-
-  if (nextItem.lecture_id) {
-    navigate(`/lecture/${nextItem.lecture_id}`);
-  } else if (nextItem.exam_id) {
-    navigate(`/exam/${nextItem.exam_id}`);
-  }
-};
-  
-
-  const handleCardClick = (course) => {
-  const fullCourse = courses.find(
-    (c) => String(c.course_id) === String(course.course_id)
-  );
-
-  setSelectedCourse(fullCourse);
+  const handleLoadLecture = (course) => {
+    const progress = getProgress(course.course_id);
 
     const lectureList = lectures.filter(
-  (l) => String(l.course_id) === String(course.course_id)
-);
+      (l) => String(l.course_id) === String(course.course_id)
+    );
 
-const examList = exams.filter(
-  (e) => String(e.course_id) === String(course.course_id)
-);
+    const examList = exams.filter(
+      (e) => String(e.course_id) === String(course.course_id)
+    );
 
-const merged = [...lectureList, ...examList].sort((a, b) => {
-  const indexA = a.lecture_index ?? a.exam_index;
-  const indexB = b.lecture_index ?? b.exam_index;
-  return indexA - indexB;
-});
+    const merged = [...lectureList, ...examList].sort((a, b) => {
+      const indexA = a.lecture_index ?? a.exam_index;
+      const indexB = b.lecture_index ?? b.exam_index;
+      return indexA - indexB;
+    });
 
-setCourseLectures(merged)
+    const nextItem = merged.find((item) => {
+      const index = item.lecture_index ?? item.exam_index;
+      return index === progress + 1;
+    });
+
+    if (!nextItem) return;
+
+    if (nextItem.lecture_id) {
+      navigate(`/lecture/${nextItem.lecture_id}`);
+    } else {
+      navigate(`/exam/${nextItem.exam_id}`);
+    }
+  };
+
+  const handleCardClick = (course) => {
+    setSelectedCourse(course);
+
+    const lectureList = lectures.filter(
+      (l) => String(l.course_id) === String(course.course_id)
+    );
+
+    const examList = exams.filter(
+      (e) => String(e.course_id) === String(course.course_id)
+    );
+
+    const merged = [...lectureList, ...examList].sort((a, b) => {
+      const indexA = a.lecture_index ?? a.exam_index;
+      const indexB = b.lecture_index ?? b.exam_index;
+      return indexA - indexB;
+    });
+
+    setCourseLectures(merged);
     setView("course");
   };
 
+  /* ---------------- COURSE VIEW ---------------- */
   if (view === "course" && selectedCourse) {
     const progress = getProgress(selectedCourse.course_id);
-    const totalLectures = lectures.filter(
-  (l) => String(l.course_id) === String(selectedCourse.course_id)
-).length;
 
-const percentage = totalLectures > 0
-  ? (progress / totalLectures) * 100
-  : 0;
+    const totalLectures = lectures.filter(
+      (l) => String(l.course_id) === String(selectedCourse.course_id)
+    ).length;
+
+    const percentage =
+      totalLectures > 0 ? (progress / totalLectures) * 100 : 0;
 
     return (
       <div style={app}>
@@ -160,119 +151,229 @@ const percentage = totalLectures > 0
           <button style={backBtn} onClick={() => setView("dashboard")}>
             ← Back to courses
           </button>
-        
-        <div style={courseHeader}>
-          <img
-          src={selectedCourse.logo}
-          style={bigIcon}
-          alt="course"
-        />
-        
-      <div>
-        <h1>{selectedCourse.course_name}</h1>
-        <p style={desc}>{selectedCourse.course_description}</p>
-        <p style={meta}>{Math.round(percentage)}% completed</p>        
-        </div>
-      </div>
 
-          <div style={bigBar}>
-          <div style={{ ...bigFill, width: `${percentage}%` }} />
+          <div style={courseHeader}>
+            <img src={selectedCourse.logo} style={bigIcon} />
+
+            <div>
+              <h1>{selectedCourse.course_name}</h1>
+              <p style={desc}>{selectedCourse.course_description}</p>
+
+              <div style={statsRow}>
+                <div>{totalLectures} lessons</div>
+                <div>{Math.round(percentage)}% completed</div>
+              </div>
+            </div>
           </div>
 
-         <div style={lectureList}>
-            {courseLectures.map((item) => {
-              const isEnrolled = enrolledCourses[selectedCourse.course_id];
-  const isLecture = item.lecture_id;
-  const isExam = item.exam_id;
+          <div style={bigBar}>
+            <div style={{ ...bigFill, width: `${percentage}%` }} />
+          </div>
+          
 
-  const index = item.lecture_index ?? item.exam_index;
-  const canOpen = isEnrolled && index <= progress + 1;
-  const canOpenExam = isEnrolled && progress === item.exam_index + 1;
-  if (isLecture) {
-    return (
-      <div
-        key={item.lecture_id}
-        style={{
-          ...lectureCard,
-          opacity: canOpen ? 1 : 0.5,
-          cursor: canOpen ? "pointer" : "not-allowed",
-        }}
-        onClick={() => {
-          if (canOpen) navigate(`/lecture/${item.lecture_id}`);
-        }}
-      >
-        {item.lecture_name}
+          <h3 style={sectionTitle}>Course Content</h3>
+
+          <div style={lectureList}>
+            {courseLectures.map((item) => {
+              const index = item.lecture_index ?? item.exam_index;
+
+              const isCompleted = index <= progress;
+              const isCurrent = index === progress + 1;
+
+              const canOpen = index <= progress + 1;
+
+              return (
+                <div
+                  key={item.lecture_id || item.exam_id}
+                  style={{
+                    ...lectureCard,
+                    opacity: canOpen ? 1 : 0.4,
+                    border: isCurrent
+                      ? "1px solid #3b82f6"
+                      : "1px solid transparent",
+                  }}
+                  onClick={() => {
+                    if (!canOpen) return;
+
+                    if (item.lecture_id)
+                      navigate(`/lecture/${item.lecture_id}`);
+                    else navigate(`/exam/${item.exam_id}`);
+                  }}
+                >
+            
+                  {item.lecture_name || item.exam_name}
+                </div>
+              );
+            })}
+          </div>
+        </div>
       </div>
     );
   }
 
-  if (isExam) {
-  return (
-    <div
-      key={item.exam_id}
-      style={{
-        ...examCard,
-        opacity: canOpenExam ? 1 : 0.5,
-        cursor: canOpenExam ? "pointer" : "not-allowed",
-      }}
-      onClick={() => {
-        if (canOpenExam) {
-          navigate(`/exam/${item.exam_id}`);
-        }
-      }}
-    >
-      {item.exam_name}
-    </div>
-  );
-}
-
-  return null;
-})}
-        </div>
-      </div>
-    </div>
-  );
-}
-
+/* ---------------- MY COURSES VIEW ---------------- */
+if (view === "myCourses") {
   return (
     <div style={app}>
       <div style={container}>
-        <h1 style={title}>Courses</h1>
+        <button style={backBtn} onClick={() => setView("dashboard")}>
+          ← Back
+        </button>
+
+        <h2 style={sectionHeader}>Your Courses</h2>
 
         <div style={courseList}>
-          {courses.map((course) => {
-            const progress = getProgress(course.course_id);
-            
-            const totalLectures = lectures.filter(
-              (l) => String(l.course_id) === String(course.course_id)
-            ).length;
-            
-            const percentage =
-            totalLectures > 0 ? (progress / totalLectures) * 100 : 0;
+          {courses
+            .filter((c) => enrolledCourses[c.course_id])
+            .map((course) => {
+              const progress = getProgress(course.course_id);
 
-            return (
-              <CourseCard
-                key={course.course_id}
-                course={course}
-                progress={Math.round(percentage)} 
-                enrolled={enrolledCourses[course.course_id]}
-                onEnroll={handleEnroll}
-                onStart={() => handleLoadLecture(course)}
-                onContinue={() => handleLoadLecture(course)}
-                onCardClick={handleCardClick} 
-              />
-            );
-          })}
+              const totalLectures = lectures.filter(
+                (l) =>
+                  String(l.course_id) === String(course.course_id)
+              ).length;
+
+              const percentage =
+                totalLectures > 0
+                  ? (progress / totalLectures) * 100
+                  : 0;
+
+              return (
+                <CourseCard
+                  key={course.course_id}
+                  course={course}
+                  progress={Math.round(percentage)}
+                  enrolled={true}
+                  onEnroll={handleEnroll}
+                  onStart={() => handleLoadLecture(course)}
+                  onContinue={() => handleLoadLecture(course)}
+                  onCardClick={handleCardClick}
+                  totalLessons={totalLectures}
+                />
+              );
+            })}
         </div>
       </div>
     </div>
   );
 }
+ /* ---------------- DASHBOARD ---------------- */
+
+const displayName =
+  dbUser?.name?.split(" ")[0] ||
+  dbUser?.full_name?.split(" ")[0] ||
+  dbUser?.username ||
+  dbUser?.email?.split("@")[0] ||
+  "Learner";
+
+return (
+  <div style={app}>
+    <div style={container}>
+      
+      {/* HERO */}
+      <div style={hero}>
+        <div>
+          <h1 style={heroTitle}>
+            Welcome back, {displayName}
+          </h1>
+
+          <p style={heroSubtitle}>
+  Pick up where you left off
+</p>
+
+<div style={{ position: "relative", marginTop: 16 }}>
+  <button
+    style={heroBtn}
+    onClick={() => setOpenMenu((prev) => !prev)}
+  >
+    Continue 
+  </button>
+
+  {openMenu && (
+    <div style={dropdown}>
+      {courses
+        .filter((c) => enrolledCourses[c.course_id])
+        .map((course) => (
+          <div
+            key={course.course_id}
+            style={courseSquare}
+            onClick={() => {
+              handleCardClick(course);
+              setOpenMenu(false);
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.filter = "grayscale(0%)";
+              e.currentTarget.style.transform = "scale(1.05)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.filter = "grayscale(100%)";
+              e.currentTarget.style.transform = "scale(1)";
+            }}
+          >
+            <img src={course.logo} style={squareIcon} />
+          </div>
+        ))}
+    </div>
+  )}
+</div>
+        </div>
+      </div>
+
+      <h2 style={sectionHeader}>All Courses</h2>
+
+      <div style={courseList}>
+        {[
+          ...courses.filter((c) => enrolledCourses[c.course_id]),
+
+          ...courses.filter((c) => !enrolledCourses[c.course_id]),
+        ].map((course) => {
+          
+          const progress = getProgress(course.course_id);
+
+          const totalLectures = lectures.filter(
+            (l) =>
+              String(l.course_id) === String(course.course_id)
+          ).length;
+
+          const percentage =
+            totalLectures > 0
+              ? (progress / totalLectures) * 100
+              : 0;
+
+          return (
+            <CourseCard
+              key={course.course_id}
+              course={course}
+              progress={Math.round(percentage)}
+              enrolled={enrolledCourses[course.course_id]}
+              onEnroll={handleEnroll}
+              onStart={() => handleLoadLecture(course)}
+              onContinue={() => handleLoadLecture(course)}
+              onCardClick={handleCardClick}
+              totalLessons={totalLectures}
+            />
+          );
+        })}
+      </div>
+    </div>
+  </div>
+);
+}
+
 
 const app = {
   minHeight: "100vh",
   width: "100%",
-  background: "#040316",
+  position: "relative",
+  overflow: "hidden",
+
+  background: `
+  radial-gradient(circle at 15% 20%, rgba(168,85,247,0.18) 0%, transparent 40%),
+  radial-gradient(circle at 85% 30%, rgba(59,130,246,0.18) 0%, transparent 40%),
+  radial-gradient(circle at 50% 80%, rgba(147,51,234,0.15) 0%, transparent 50%),
+  #01020d
+`,
+
   color: "#fff",
   display: "flex",
   justifyContent: "center",
@@ -284,16 +385,7 @@ const container = {
   padding: "60px 20px",
 };
 
-const title = {
-  fontSize: 25,
-  fontWeight: 700,
-  marginBottom: 30,
-  backgroundColor: "#10111A",
-  borderRadius: 22,
-  textAlign: "center",
-  padding: 10,
-  color: "#e7f0ff"
-};
+
 
 const courseList = {
   display: "flex",
@@ -320,35 +412,24 @@ const lectureList = {
 
 const lectureCard = {
   padding: 12,
-  background: "#081131",
-  borderRadius: 14,
-};
-
-const examCard = {
-  padding: "12px 18px",
-  background: "#1c063d",
-  borderRadius: 30,
-};
-
-const meta = {
-  color: "transparent",
-  background: "linear-gradient(90deg,#3b82f6,#8e39e3,#3b82f6)",
-  WebkitBackgroundClip: "text",
-  backgroundClip: "text",
-  marginTop: 6,
+  background: "#0f172a",
+  borderRadius: 10,
+  cursor: "pointer",
 };
 
 const bigBar = {
   height: 8,
-  background: "#1e293b",
+  background: "rgba(255,255,255,0.08)",
   borderRadius: 999,
   marginTop: 20,
 };
 
 const bigFill = {
   height: 8,
-  background: "linear-gradient(90deg,#3b82f6,#8e39e3,#3b82f6)",
   borderRadius: 999,
+  background: "linear-gradient(90deg,#3b1a8a,#5b21b6,#8b5cf6)",
+  boxShadow: "0 0 10px rgba(139,92,246,0.45)",
+  transition: "width 0.4s ease",
 };
 
 const courseHeader = {
@@ -361,5 +442,102 @@ const courseHeader = {
 const bigIcon = {
   width: 90,
   height: 90,
+  objectFit: "contain",
+};
+
+const hero = {
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "center",
+  marginBottom: 40,
+  padding: "30px",
+  borderRadius: 24,
+  background:
+    "radial-gradient(circle at 20% 20%, rgba(99,102,241,0.25), transparent 40%), linear-gradient(135deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02))",
+  border: "1px solid rgba(255,255,255,0.08)",
+};
+
+const heroTitle = {
+  fontSize: 32,
+  fontWeight: 800,
+};
+
+const heroSubtitle = {
+  marginTop: 8,
+  color: "#94a3b8",
+};
+
+const heroBtn = {
+  marginTop: 16,
+  padding: "10px 18px",
+  borderRadius: 12,
+  border: "none",
+  background: "linear-gradient(135deg,#3b82f6,#8b5cf6)",
+  color: "#fff",
+  cursor: "pointer",
+};
+
+const sectionHeader = {
+  marginBottom: 20,
+  fontSize: 18,
+  fontWeight: 600,
+};
+
+const statsRow = {
+  display: "flex",
+  gap: 20,
+  marginTop: 10,
+  color: "#94a3b8",
+};
+
+const primaryBtn = {
+  marginTop: 15,
+  padding: "10px 18px",
+  borderRadius: 10,
+  border: "none",
+  background: "linear-gradient(135deg,#3b82f6,#8b5cf6)",
+  color: "#fff",
+  cursor: "pointer",
+};
+
+const sectionTitle = {
+  marginTop: 20,
+  marginBottom: 10,
+  fontWeight: 600,
+};
+
+const dropdown = {
+  position: "absolute",
+  top: 50,
+  left: 0,
+  width: 240,
+  padding: 12,
+  borderRadius: 16,
+  background:
+    "linear-gradient(135deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02))",
+  border: "1px solid rgba(255,255,255,0.08)",
+  backdropFilter: "blur(14px)",
+  display: "grid",
+  gridTemplateColumns: "repeat(3, 1fr)", 
+  gap: 10,
+  zIndex: 100,
+};
+
+const courseSquare = {
+  width: 60,
+  height: 60,
+  borderRadius: 12,
+  background: "#0f172a",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  cursor: "pointer",
+  filter: "grayscale(100%)",
+  transition: "all 0.25s ease",
+};
+
+const squareIcon = {
+  width: "60%",
+  height: "60%",
   objectFit: "contain",
 };

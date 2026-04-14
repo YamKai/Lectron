@@ -413,12 +413,24 @@ function LecturePage() {
     isDragging === "editor" ? "row-resize" :
     undefined;
 
-  return (
-    <div
-      ref={containerRef}
-      className="lecture-container"
-      style={globalCursor ? { cursor: globalCursor, userSelect: "none" } : undefined}
-    >
+return (
+  <div
+    ref={containerRef}
+    className="lecture-container"
+    style={{
+      minHeight: "100vh",
+      width: "100%",
+      background: `
+        radial-gradient(circle at 15% 20%, rgba(168,85,247,0.14) 0%, transparent 50%),
+        radial-gradient(circle at 85% 30%, rgba(59,130,246,0.14) 0%, transparent 50%),
+        radial-gradient(circle at 50% 80%, rgba(147,51,234,0.12) 0%, transparent 60%),
+        #01020d
+      `,
+      ...(globalCursor
+        ? { cursor: globalCursor, userSelect: "none" }
+        : {}),
+    }}
+  >
 
       {/* -- LEFT PANEL ------------------------------------------ */}
       <div className="lecture-left" style={{ flex: `0 0 ${leftPct}%` }}>
