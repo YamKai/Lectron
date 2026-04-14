@@ -8,6 +8,21 @@ import CourseCard from "../components/main-dashboard/CourseCard";
 import { useNavigate } from "react-router-dom";
 
 export default function MainDashboard() {
+  const dropdownRef = useRef(null);
+  useEffect(() => {
+  const close = (e) => {
+    if (!dropdownRef.current) return;
+
+    if (!dropdownRef.current.contains(e.target)) {
+      setOpenMenu(false);
+    }
+  };
+
+  document.addEventListener("mousedown", close);
+
+  return () => document.removeEventListener("mousedown", close);
+}, []);
+
 
   const [hovered, setHovered] = useState(false);
 
@@ -285,21 +300,6 @@ const displayName =
   "Learner";
 const hasCourses = Object.keys(enrolledCourses).length > 0;
 
-const dropdownRef = useRef(null);
-
-useEffect(() => {
-  const close = (e) => {
-    if (!dropdownRef.current) return;
-
-    if (!dropdownRef.current.contains(e.target)) {
-      setOpenMenu(false);
-    }
-  };
-
-  document.addEventListener("mousedown", close);
-
-  return () => document.removeEventListener("mousedown", close);
-}, []);
 
 return (
   <div style={app}>
