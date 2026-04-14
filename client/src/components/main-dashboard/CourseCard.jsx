@@ -69,7 +69,7 @@ const card = {
   display: "flex",
   justifyContent: "space-between",
   borderRadius: 16,
-  background: "linear-gradient(135deg,#1e293b,#020617)",
+  background: "linear-gradient(135deg,#1c1e2e,#020617)",
   minHeight: 100,
   overflow: "hidden",
 
@@ -87,7 +87,7 @@ const cardLeft = {
 
 const cardAccent = { 
   width: 120, 
-  background: "linear-gradient(135deg,#1e3a8a,#0f172a)", 
+  background: "linear-gradient(135deg,#26104f,#1c1e2e)", 
   display: "flex", 
   alignItems: "center", 
   justifyContent: "center", 
@@ -130,7 +130,7 @@ const bar = {
   
 const fill = { 
   height: 5, 
-  background: "linear-gradient(90deg,#22c55e,#3b82f6)", 
+  background: "linear-gradient(90deg,#3b82f6,#8e39e3,#3b82f6)", 
   borderRadius: 999, 
 }; 
 
@@ -158,14 +158,14 @@ const enrollBtn = {
 
 const startBtn = { 
   ...baseBtn, 
-  background: "#3b82f6", 
+  background: "#c373fc", 
   border: "none", 
   color: "#fff", 
 }; 
 
 const continueBtn = { 
   ...baseBtn, 
-  background: "linear-gradient(135deg,#22c55e,#16a34a)", 
+  background: "linear-gradient(135deg,#3996e3,#7439e3)", 
   border: "none", 
   color: "#fff",
 };

@@ -201,7 +201,7 @@ const percentage = totalLectures > 0
           if (canOpen) navigate(`/lecture/${item.lecture_id}`);
         }}
       >
-        📘 {item.lecture_name}
+        {item.lecture_name}
       </div>
     );
   }
@@ -211,7 +211,7 @@ const percentage = totalLectures > 0
     <div
       key={item.exam_id}
       style={{
-        ...lectureCard,
+        ...examCard,
         opacity: canOpenExam ? 1 : 0.5,
         cursor: canOpenExam ? "pointer" : "not-allowed",
       }}
@@ -221,7 +221,7 @@ const percentage = totalLectures > 0
         }
       }}
     >
-      📝 {item.exam_name}
+      {item.exam_name}
     </div>
   );
 }
@@ -272,7 +272,7 @@ const percentage = totalLectures > 0
 const app = {
   minHeight: "100vh",
   width: "100%",
-  background: "#020617",
+  background: "#040316",
   color: "#fff",
   display: "flex",
   justifyContent: "center",
@@ -285,9 +285,14 @@ const container = {
 };
 
 const title = {
-  fontSize: 38,
+  fontSize: 25,
   fontWeight: 700,
   marginBottom: 30,
+  backgroundColor: "#10111A",
+  borderRadius: 22,
+  textAlign: "center",
+  padding: 10,
+  color: "#e7f0ff"
 };
 
 const courseList = {
@@ -315,12 +320,21 @@ const lectureList = {
 
 const lectureCard = {
   padding: 12,
-  background: "#0f172a",
-  borderRadius: 10,
+  background: "#081131",
+  borderRadius: 14,
+};
+
+const examCard = {
+  padding: "12px 18px",
+  background: "#1c063d",
+  borderRadius: 30,
 };
 
 const meta = {
-  color: "#22c55e",
+  color: "transparent",
+  background: "linear-gradient(90deg,#3b82f6,#8e39e3,#3b82f6)",
+  WebkitBackgroundClip: "text",
+  backgroundClip: "text",
   marginTop: 6,
 };
 
@@ -333,7 +347,7 @@ const bigBar = {
 
 const bigFill = {
   height: 8,
-  background: "#22c55e",
+  background: "linear-gradient(90deg,#3b82f6,#8e39e3,#3b82f6)",
   borderRadius: 999,
 };
 

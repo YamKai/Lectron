@@ -65,7 +65,7 @@ function ExamMCQQuestion({ question, onSubmit, disabled }) {
         style={{
           alignSelf: "flex-start",
           padding: "6px 18px",
-          background: "#2563eb",
+          background: "#28238d",
           color: "#fff",
           border: "none",
           borderRadius: "6px",

@@ -11,8 +11,8 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import CodeEditor from "./CodeEditor";
 import Terminal from "./Terminal";
+const WS_URL = import.meta.env.VITE_WS_URL || "ws://localhost:3001/ws/execute";
 
-const WS_URL = "ws://localhost:3001/ws/execute";
 const DEFAULT_CODE = "# Write your code here\n";
 const MAX_TERMINAL_LINES = 500;
 

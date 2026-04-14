@@ -112,8 +112,8 @@ return (
       borderRadius: 10,
       marginBottom: 8,
       cursor: "pointer",
-      background: "#0f172a",
-      border: "1px solid #1f2937",
+      background: "#030b1c",
+      border: "1px solid #031228",
     }}
     onClick={() => handleOpenUser(u)}
   >
@@ -563,7 +563,7 @@ placeholder="Exam index" style={s.inputModern}/>
       <div
       key={e.course_id}
       style={{
-        background: "#0f172a",
+        background: "#030b1d",
         padding: 12,
         borderRadius: 10,
         marginBottom: 10,
@@ -593,7 +593,7 @@ placeholder="Exam index" style={s.inputModern}/>
        <div
         style={{
           height: 4,                    
-          background: "#1e293b",  
+          background: "#171330",  
           borderRadius: 10,
           marginTop: 8,
         }}
@@ -602,7 +602,7 @@ placeholder="Exam index" style={s.inputModern}/>
           style={{
             width: `${progress}%`,
             height: "100%",
-            background: "linear-gradient(90deg, #22c55e 0%, #14b8a6 50%, #3b82f6 100%)",
+            background: "linear-gradient(90deg,#3b82f6,#8e39e3,#3b82f6)",
             borderRadius: 10,
             transition: "width 0.4s ease", 
           }}
@@ -617,7 +617,7 @@ placeholder="Exam index" style={s.inputModern}/>
           marginTop: 10,
           padding: "8px 16px",
           borderRadius: 8,
-          background: "#1e293b",
+          background: "#020a17",
           color: "#fff",
           border: "1px solid #334155",
           cursor: "pointer",
@@ -635,19 +635,19 @@ placeholder="Exam index" style={s.inputModern}/>
 
   /*  STYLES  */
   const s = {
-    app: { height:"100vh", width:"100%", background:"radial-gradient(circle at 20% 0%, #0f172a, #020617)", color:"#fff" },
+    app: { height:"100vh", width:"100%", background:"radial-gradient(circle at 20% 0%, #000000, #00082e)", color:"#fff" },
     layout: { display:"flex", height:"100%", width:"100%" },
     sidebar: { width:280, padding:24, background:"#020617", borderRight:"1px solid rgba(255,255,255,0.05)" },
     panel: { flex:1, padding:"40px 60px", overflowY:"auto" },
 
-    fullForm: { width:"100%", maxWidth:900, margin:"0 auto", background:"rgba(15,23,42,0.7)", padding:40, borderRadius:20 },
+    fullForm: { width:"100%", maxWidth:900, margin:"0 auto", background:"rgba(3, 0, 19, 0.7)", padding:40, borderRadius:20 },
 
-    card: { display:"flex", alignItems:"center", height:110, borderRadius:14, marginBottom:14, cursor:"pointer", overflow:"hidden", background:"linear-gradient(135deg,#1e293b,#020617)", border:"1px solid #1f2937" },
+    card: { display:"flex", alignItems:"center", height:110, borderRadius:14, marginBottom:14, cursor:"pointer", overflow:"hidden", background:"linear-gradient(135deg,#1c1e2e,#020617)", border:"1px solid #1f2937" },
     activeCard: { border:"1px solid #3b82f6" },
-    addCard: { display: "flex", alignItems: "center", height: 110, borderRadius: 14, marginBottom: 14, cursor: "pointer", overflow: "hidden", background: "linear-gradient(135deg,#1e293b,#020617)", border: "1px dashed #374151", color: "#9ca3af", transition: "all 0.2s ease"},
+    addCard: { display: "flex", alignItems: "center", height: 110, borderRadius: 14, marginBottom: 14, cursor: "pointer", overflow: "hidden", background: "linear-gradient(135deg,#1c1e2e,#020617)", border: "1px dashed #374151", color: "#9ca3af", transition: "all 0.2s ease"},
     
     cardLeft: { display:"flex", alignItems:"center", width:"100%" },
-    cardAccent: { width: 110, background: "linear-gradient(135deg,#1e3a8a,#0f172a)", display: "flex", alignItems: "center", justifyContent: "center",},
+    cardAccent: { width: 110, background: "linear-gradient(135deg,#26104f,#1c1e2e)", display: "flex", alignItems: "center", justifyContent: "center",},
     contentLeft: { padding:"7px 17px", flex:1 },
 
     sidebarIcon: { width:65, height:110, objectFit:"contain" },
@@ -656,12 +656,12 @@ placeholder="Exam index" style={s.inputModern}/>
     input: { width:"100%", padding:"12px", marginTop:12, background:"#020617", color:"#fff", border:"1px solid #1f2937", borderRadius:8 },
     textarea: { width:"100%", padding:"12px", marginTop:12, background:"#020617", color:"#fff", border:"1px solid #1f2937", borderRadius:8, minHeight:80 },
 
-    button: { padding:"12px 20px", background:"#0f172a", border:"1px solid #1f2937", color:"#cbd5f5", borderRadius:20, cursor:"pointer" },
+    button: { margin: "10px 0", padding:"4px 20px", background:"#1b1725", border:"1px solid #1f2937", color:"#cbd5f5", borderRadius:20, cursor:"pointer" },
     updateBtn: { padding:"10px 16px", border:"1px solid #14532d", color:"#4ade80", borderRadius:20, cursor:"pointer" },
     deleteBtn: { padding:"10px 16px", border:"1px solid #7f1d1d", color:"#f87171", borderRadius:20, cursor:"pointer" },
     backBtn: { padding:"8px 14px", border:"1px solid #1f2937", color:"#9ca3af", borderRadius:20, cursor:"pointer" },
 
-    lectureItem: { padding:"12px", marginTop:10, background:"#0f172a", borderRadius:10, cursor:"pointer" },
+    lectureItem: { padding:"12px", marginTop:10, background:"#110f2a", borderRadius:10, cursor:"pointer" },
 
     actionsRow: { marginTop:40, display:"flex", justifyContent:"space-between" },
     rightActions: { display:"flex", gap:10 },

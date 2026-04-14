@@ -403,7 +403,7 @@ function ExamPage() {
             onClick={handleNext}
             style={{
               padding: "8px 24px",
-              background: "#2563eb",
+              background: "#28238d",
               color: "#fff",
               border: "none",
               borderRadius: "6px",
