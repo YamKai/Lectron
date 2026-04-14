@@ -4,7 +4,9 @@ export default function AdminViews(props) {
   form,
   setForm,
   taskForm,
+  questionForm,
   setTaskForm,
+  setQuestionForm,
   courses,
   
   handleSelectCourse,
@@ -16,18 +18,28 @@ export default function AdminViews(props) {
   selectedLecture,
   selectedTask,
   selectedExam,
+  selectedQuestion,
+  selectedUser,
   lectures,
   tasks,
   exams,
+  questions,
+  users,
+  userEnrollments,
+  allLectures,
   tempLectures,
   tempTasks,
   tempExams,
+  tempQuestions,
 
   setView,
   setSelectedLecture,
   setSelectedTask,
   setSelectedExam,
+  setSelectedQuestion,
   setTempTasks,
+  setTempQuestions,
+  setSelectedUser,
 
   handleOpenLecture,
   handleAddLecture,
@@ -44,10 +56,18 @@ export default function AdminViews(props) {
   handleUpdateExam,
   handleDeleteExam,
 
+  handleOpenQuestion,
+  handleAddQuestion,
+  handleUpdateQuestion,
+  handleDeleteQuestion,
+
+  handleOpenUser,
+
 } = props;
 
 
 return (
+<>
 <div style={s.app}>
 <div style={s.layout}>
 
@@ -72,37 +92,73 @@ return (
 ))}
 
 <div style={s.addCard} onClick={handleAddCourse}>
-  <div style={{
-    ...s.cardLeft,
-    justifyContent: "center"
-  }}>
+  <div style={{ ...s.cardLeft, justifyContent: "center" }}>
     <div style={{ color: "#9ca3af" }}>
       + Add Course
     </div>
   </div>
 </div>
+
+<h2 style={{ marginTop: 20 }}>Users</h2>
+
+{users.map((u) => (
+  <div
+    key={u.user_id}
+    style={{
+      display: "flex",
+      alignItems: "center",
+      gap: 10,
+      padding: 10,
+      borderRadius: 10,
+      marginBottom: 8,
+      cursor: "pointer",
+      background: "#0f172a",
+      border: "1px solid #1f2937",
+    }}
+    onClick={() => handleOpenUser(u)}
+  >
+    <img
+      src={u.avatar_url}
+      alt=""
+      style={{
+        width: 36,
+        height: 36,
+        borderRadius: "50%",
+        objectFit: "cover",
+      }}
+    />
+
+    <div style={{ display: "flex", flexDirection: "column" }}>
+      <div style={{ fontSize: 14, fontWeight: 500 }}>
+        {u.user_name || "User"}
+      </div>
+
+      <div style={{ fontSize: 11, color: "#64748b" }}>
+        {u.email}
+      </div>
+    </div>
+  </div>
+))}
 </div>
 
 {/* PANEL */}
 <div style={s.panel}>
 <div style={s.fullForm}>
-  {view === "none" ? (
-    <div
-      style={{
-        height: "100%",
-        minHeight: 400,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        color: "#64748b",
-        fontSize: 16,
-        textAlign: "center",
-      }}
-    >
-      Select or add a course
-    </div>
-  ) : (
-    <>
+
+{view === "none" && (
+  <div style={{
+    height: "100%",
+    minHeight: 400,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    color: "#64748b",
+    fontSize: 16,
+    textAlign: "center",
+  }}>
+    Select or add a course
+  </div>
+)}
 
 {/* COURSE */}
 {view === "course" && (
@@ -141,7 +197,19 @@ setForm({
   <div key={i} style={s.lectureItem} onClick={()=>handleOpenExam(e)}>{e.exam_name}</div>
 ))}
 
-<button style={s.button} onClick={()=>{ setSelectedExam(null); setView("exam"); }}>+ Add Exam</button>
+<button style={s.button} onClick={()=>{ 
+  setSelectedExam(null); 
+  setTempQuestions([]);  
+  setForm({
+    ...form,
+    exam_name: "",
+    exam_description: "",
+    exam_index: "",
+  });
+
+  setView("exam"); 
+}}
+>+ Add Exam</button>
 
 <div style={s.actionsRow}>
   <div/>
@@ -244,6 +312,104 @@ setView("task"); }}>+ Add Task</button>
 </>
 )}
 
+{/* QUESTION */}
+{view === "question" && (
+<>
+  <button style={s.backBtn} onClick={()=>setView("exam")}>← Back</button>
+  <h2>{selectedQuestion ? "Edit Question" : "Add Question"}</h2>
+
+  <input
+    type="number"
+    value={questionForm.index || ""}
+    onChange={(e)=>setQuestionForm({...questionForm,index:e.target.value})}
+    placeholder="Question index"
+    style={s.inputModern}
+  />
+
+<select
+  value={questionForm.type || ""}
+  onChange={(e) =>
+    setQuestionForm({ ...questionForm, type: e.target.value })
+  }
+  style={s.inputModern}
+>
+  <option value="">Select type</option>
+  <option value="mcq">MCQ</option>
+  <option value="task">Task</option>
+</select>
+
+{questionForm.type === "mcq" && (
+  <>
+    <textarea
+  value={questionForm.question || ""}
+  onChange={(e)=>setQuestionForm({...questionForm,question:e.target.value})}
+  placeholder="Question text"
+  style={{
+    ...s.inputModern,
+    minHeight: 120,
+    resize: "vertical",
+    lineHeight: 1.5
+  }}
+/>
+
+    <input
+      value={questionForm.answer || ""}
+      onChange={(e)=>setQuestionForm({...questionForm,answer:e.target.value})}
+      placeholder="Correct answer"
+      style={s.inputModern}
+    />
+  </>
+)}
+
+{questionForm.type === "task" && (
+  <>
+    <textarea
+  value={questionForm.question || ""}
+  onChange={(e)=>setQuestionForm({...questionForm,question:e.target.value})}
+  placeholder="Task description"
+  style={{
+    ...s.inputModern,
+    minHeight: 120,
+    resize: "vertical",
+    lineHeight: 1.5
+  }}
+/>
+
+    <input
+      value={questionForm.answer || ""}
+      onChange={(e)=>setQuestionForm({...questionForm,answer:e.target.value})}
+      placeholder="Expected output"
+      style={s.inputModern}
+    />
+  </>
+)}
+
+ <div style={s.actionsRow}>
+  <div />
+  <div style={s.rightActions}>
+    {selectedQuestion ? (
+      <>
+        <button style={s.updateBtn} onClick={handleUpdateQuestion}>
+          Update
+        </button>
+
+        <button
+          style={s.deleteBtn}
+          onClick={() => handleDeleteQuestion(selectedQuestion)}
+        >
+          Delete
+        </button>
+      </>
+    ) : (
+      <button style={s.button} onClick={handleAddQuestion}>
+        +
+      </button>
+    )}
+  </div>
+</div>
+</>
+)}
+
 {/* EXAM */}
 {view === "exam" && (
 <>
@@ -265,37 +431,206 @@ placeholder="Exam index" style={s.inputModern}/>
   placeholder="Enter exam description" style={s.textareaModern}/></div>
 </div>
 
+<h4>Questions</h4>
+{(selectedExam?.exam_id ? questions : tempQuestions).map((q) => (  <div
+    key={q.question_id}
+    style={{
+      ...s.lectureItem,
+      display: "flex",
+      flexDirection: "column",
+      gap: 4
+    }}
+    onClick={() => handleOpenQuestion(q)}
+  >
+    
+   <div style={{ fontSize: 12, color: "#64748b" }}>
+  Question #{q.question_index ?? 0}
+</div>
+
+<div
+  style={{
+    fontSize: 14,
+    color: "#e2e8f0",
+    lineHeight: 1.5,
+  }}
+>
+  {q.question_data?.text || "No question"}
+</div>
+  </div>  
+))}
+
+<button
+  style={s.button}
+  onClick={() => {
+    setSelectedQuestion(null);
+    setQuestionForm({
+  question: "",
+  index: "",
+  answer: "",
+  type: "",
+});
+    setView("question");
+  }}
+>
+  + Add Question
+</button>
+
 <div style={s.actionsRow}>
   <div />
   <div style={s.rightActions}>
-    {!selectedExam ? (
-      <button style={s.button} onClick={handleAddExam}>
-        +
-      </button>
-    ) : (
+    {selectedExam ? (
       <>
         <button style={s.updateBtn} onClick={handleUpdateExam}>
           Update
         </button>
-        <button style={s.deleteBtn} onClick={handleDeleteExam}>
+
+        <button
+          style={s.deleteBtn}
+          onClick={handleDeleteExam}
+        >
           Delete
         </button>
       </>
-                        )}
-                      </div>
-                    </div>
-                  </>
-                )}
+    ) : (
+      <button style={s.button} onClick={handleAddExam}>
+        +
+      </button>
+    )}
+  </div>
+</div>
 
-              </>
-            )}
+</>
+)}  
+ </div>   
+ </div>   
+ </div>   
+  </div>               
+              
+{selectedUser && (
+   <div
+    style={{
+      position: "fixed",
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      background: "rgba(0,0,0,0.7)",
+      display: "flex",
+      justifyContent: "center",
+      alignItems: "center",
+      zIndex: 999,
+    }}
+  >         
+    <div
+      style={{
+        background: "#020617",
+        padding: 20,
+        borderRadius: 12,
+        width: 420,
+      }}
+    >
+      <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20 }}>
+        <img
+          src={selectedUser.avatar_url}
+          alt=""
+          style={{
+            width: 50,
+            height: 50,
+            borderRadius: "50%",
+            objectFit: "cover",
+          }}
+        />
+        <div>
+          <div style={{ fontSize: 16, fontWeight: 600 }}>
+            {selectedUser.user_name || "User"}
+          </div>
 
+          <div style={{ fontSize: 12, color: "#94a3b8" }}>
+            {selectedUser.email}
           </div>
         </div>
+      </div>
+      
+    <h4 style={{ marginBottom: 10 }}>Enrollments</h4>
+     {userEnrollments?.map((e) => {
+      const progressCount = Number(e.course_progress ?? 0);
+      const totalLectures = allLectures.filter(
+          (l) => String(l.course_id) === String(e.course_id)).length;
+      const progress =
+      totalLectures > 0 ? Math.round((progressCount / totalLectures) * 100): 0;
 
+      return (
+      <div
+      key={e.course_id}
+      style={{
+        background: "#0f172a",
+        padding: 12,
+        borderRadius: 10,
+        marginBottom: 10,
+      }}
+    >
+      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        {e.course_logo && (
+          <img
+      src={e.course_logo}
+      alt=""
+      style={{
+        width: 30,
+        height: 30,
+        objectFit: "contain",
+      }}
+    />
+  )}
+
+  <div style={{ fontWeight: 500 }}>
+    {e.course_name || "Course"}
+  </div>
+</div>
+
+      <div style={{ fontSize: 12, color: "#94a3b8", marginTop: 4 }}>
+        Progress: {progress}%
+      </div>
+       <div
+        style={{
+          height: 4,                    
+          background: "#1e293b",  
+          borderRadius: 10,
+          marginTop: 8,
+        }}
+      >
+        <div
+          style={{
+            width: `${progress}%`,
+            height: "100%",
+            background: "linear-gradient(90deg, #22c55e 0%, #14b8a6 50%, #3b82f6 100%)",
+            borderRadius: 10,
+            transition: "width 0.4s ease", 
+          }}
+        />
       </div>
     </div>
   );
+})}
+
+      <button
+        style={{
+          marginTop: 10,
+          padding: "8px 16px",
+          borderRadius: 8,
+          background: "#1e293b",
+          color: "#fff",
+          border: "1px solid #334155",
+          cursor: "pointer",
+        }}
+        onClick={() => setSelectedUser(null)}
+      >
+        Close
+      </button>
+    </div>
+  </div>
+)}
+</>
+);
 }
 
   /*  STYLES  */
@@ -336,4 +671,3 @@ placeholder="Exam index" style={s.inputModern}/>
     inputModern: { width:"100%", padding:"10px", background:"#0f172a", color:"#fff", border:"1px solid #1f2937", borderRadius:6 },
     textareaModern: { width:"100%", padding:"10px", background:"#0f172a", color:"#fff", border:"1px solid #1f2937", borderRadius:6, minHeight:120 },
   };
-  

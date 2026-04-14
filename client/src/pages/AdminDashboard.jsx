@@ -3,6 +3,9 @@ import { coursesApi } from "../api/data/course";
 import { lecturesApi } from "../api/data/lecture";
 import { tasksApi } from "../api/data/task";
 import { examsApi } from "../api/data/exam";
+import { questionsApi } from "../api/data/question";
+import { usersApi } from "../api/data/user";
+import { enrollmentsApi } from "../api/data/enrollment";
 import AdminViews from "../components/admin-dashboard/AdminView.jsx";
 
 const exists = (list, value, key) => {
@@ -16,22 +19,35 @@ const exists = (list, value, key) => {
 export default function AdminDashboard() {
   const [courses, setCourses] = useState([]);
   const [lectures, setLectures] = useState([]);
+  const [allLectures, setAllLectures] = useState([]);
   const [tasks, setTasks] = useState([]);
   const [tempTasks, setTempTasks] = useState([]);
   const [exams, setExams] = useState([]);
+  const [questions, setQuestions] = useState([]);
+  const [tempQuestions, setTempQuestions] = useState([]);
+  const [users, setUsers] = useState([]);
 
-const [taskForm, setTaskForm] = useState({
+const [taskForm, setTaskForm] = useState({ 
   description: "",
   index: "",
   evaluation: "",
 });
+  const [userEnrollments, setUserEnrollments] = useState([]);
   const [tempLectures, setTempLectures] = useState([]);
   const [tempExams, setTempExams] = useState([]);
+  const [questionForm, setQuestionForm] = useState({
+  question: "",
+  index: "",
+  answer: "",
+  type: "", 
+});
 
   const [selectedCourse, setSelectedCourse] = useState(null);
   const [selectedLecture, setSelectedLecture] = useState(null);
   const [selectedTask, setSelectedTask] = useState(null);
   const [selectedExam, setSelectedExam] = useState(null);
+  const [selectedQuestion, setSelectedQuestion] = useState(null);
+  const [selectedUser, setSelectedUser] = useState(null);
 
 const [view, setView] = useState("none");
 
@@ -67,7 +83,7 @@ const [view, setView] = useState("none");
 
 const loadTasks = async (lectureId) => {
   try {
-    const res = await tasksApi.get(`getByLecture/${lectureId}`);
+    const res = await tasksApi.get(`belongto/${lectureId}`);
     const data = res?.data || res;
 
     console.log("TASKS:", data);
@@ -95,8 +111,74 @@ setTasks(
   );
 };
 
+const loadQuestions = async (examId) => {
+  try {
+    const data = await questionsApi.getByExam(examId);
+
+    setQuestions(
+      (Array.isArray(data) ? data : []).sort(
+        (a, b) => (a.question_index ?? 0) - (b.question_index ?? 0)
+      )
+    );
+  } catch (err) {
+    console.error("Load questions error:", err);
+    setQuestions([]);
+  }
+};
+
+const loadUsers = async () => {
+  try {
+    const data = await usersApi.get("all");
+    setUsers(data?.data || data || []);
+  } catch (err) {
+    console.error(err);
+  }
+};
+
+const loadUserEnrollments = async (userId) => {
+  try {
+    const res = await enrollmentsApi.getByUser(userId);
+    const enrollments = res?.data || res || [];
+
+    // 🔥 load all courses
+    const coursesRes = await coursesApi.get("all");
+    const courses = coursesRes?.data || coursesRes || [];
+
+    // 🔥 merge
+    const enriched = enrollments.map((e) => {
+      const course = courses.find(
+        (c) => String(c.course_id) === String(e.course_id)
+      );
+
+      return {
+        ...e,
+        course_name: course?.course_name,
+        course_logo: course?.logo,
+      };
+    });
+
+    setUserEnrollments(enriched);
+  } catch (err) {
+    console.error(err);
+    setUserEnrollments([]);
+  }
+};
+
+const loadAllLectures = async () => {
+  try {
+    const data = await lecturesApi.get("all");
+    const list = data?.data || data || [];
+    setAllLectures(list);
+  } catch (err) {
+    console.error("Error loading lectures:", err);
+    setAllLectures([]);
+  }
+};
+
   useEffect(() => {
     loadCourses();
+    loadAllLectures(); 
+    loadUsers(); 
   }, []);
 
   /* COURSE */
@@ -423,31 +505,33 @@ const handleDeleteTask = async (task) => {
 };
 
   /* EXAM */
-  const handleOpenExam = (exam) => {
-    setSelectedExam(exam);
-    setView("exam");
+const handleOpenExam = async (exam) => {
+  setSelectedExam(exam);
+  setSelectedQuestion(null);
+  setView("exam");
 
-    setForm({
-      ...form,
-      exam_name: exam.exam_name,
-      exam_description: exam.exam_description,
-      exam_index: exam.exam_index || "", 
-    });
-  };
+  setForm({
+    ...form,
+    exam_name: exam.exam_name,
+    exam_description: exam.exam_description,
+    exam_index: exam.exam_index || "",
+  });
+
+  await loadQuestions(exam.exam_id); 
+};
 
 const handleAddExam = async () => {
   if (!form.exam_name.trim()) return alert("Exam name required");
 
- const list = selectedCourse?.course_id ? exams : tempExams;
+  const list = selectedCourse?.course_id ? exams : tempExams;
 
-if (exists(list, form.exam_name, "exam_name")) {
-  return alert("Exam already exists in this course");
-}
+  if (exists(list, form.exam_name, "exam_name")) {
+    return alert("Exam already exists in this course");
+  }
 
-if (list.some(e => Number(e.exam_index) === Number(form.exam_index))) {
-  return alert("Exam index already used");
-}
-
+  if (list.some(e => Number(e.exam_index) === Number(form.exam_index))) {
+    return alert("Exam index already used");
+  }
   if (!selectedCourse?.course_id) {
     setTempExams([
       ...tempExams,
@@ -462,27 +546,43 @@ if (list.some(e => Number(e.exam_index) === Number(form.exam_index))) {
       ...form,
       exam_name: "",
       exam_description: "",
+      exam_index: "",
     });
+
+    setTempQuestions([]);   
+    setQuestions([]);       
+    setSelectedExam(null); 
 
     setView("course");
     return;
   }
+
   try {
     await examsApi.create({
       exam_name: form.exam_name,
       exam_description: form.exam_description,
-      exam_index: Number(form.exam_index) || 0, 
+      exam_index: Number(form.exam_index) || 0,
       course_id: selectedCourse.course_id,
     });
 
     await loadExams(selectedCourse.course_id);
-    setView("course");
+    setForm({
+      ...form,
+      exam_name: "",
+      exam_description: "",
+      exam_index: "",
+    });
+
+    setTempQuestions([]);   
+    setQuestions([]);       
+    setSelectedExam(null);  
+
+    setView("course"); 
   } catch (err) {
     console.error(err);
     alert("Add exam failed");
   }
 };
-
 
 const handleUpdateExam = async () => {
   if (!selectedExam?.exam_id) return;
@@ -502,7 +602,6 @@ const handleUpdateExam = async () => {
   }
 };
 
-
 const handleDeleteExam = async () => {
   if (!window.confirm("Delete this exam?")) return;
 
@@ -516,6 +615,168 @@ const handleDeleteExam = async () => {
   }
 };
 
+/* QUESTION */
+const handleOpenQuestion = (q) => {
+  setSelectedQuestion(q);
+
+  setQuestionForm({
+    index: q.question_index ?? "",
+    type: q.question_type ?? "",
+    question: q.question_data?.text || "",
+    answer: q.question_data?.answer || "",
+  });
+
+  setView("question");  
+};
+
+const handleAddQuestion = async () => {
+  if (!questionForm.question.trim()) return alert("Question required");
+  const list = selectedExam?.exam_id ? questions : tempQuestions;
+
+if (list.some(q => Number(q.question_index) === Number(questionForm.index))) {
+  return alert("Question index already used");
+}
+if (
+  exists(
+    list.map(q => ({ text: q.question_data?.text })),
+    questionForm.question,
+    "text"
+  )
+) {
+  return alert("Question already exists in this exam");
+}
+
+  if (!selectedExam?.exam_id) {
+    setTempQuestions((prev) => [
+      ...prev,
+      {
+        question_index: Number(questionForm.index),
+        question_type: questionForm.type,
+        question_data: {
+          text: questionForm.question,
+          answer: questionForm.answer,
+        },
+      },
+    ]);
+
+    setQuestionForm({
+      question: "",
+      index: "",
+      answer: "",
+      type: "",
+    });
+
+    setView("exam");
+    return;
+  }
+
+  try {
+    await questionsApi.create({
+      exam_id: selectedExam.exam_id,
+      question_index: Number(questionForm.index),
+      question_type: questionForm.type,
+      question_data: {
+        text: questionForm.question,
+        answer: questionForm.answer,
+      },
+    });
+
+    await loadQuestions(selectedExam.exam_id);
+
+    setQuestionForm({
+      question: "",
+      index: "",
+      answer: "",
+      type: "",
+    });
+
+    setSelectedQuestion(null);
+    setView("exam");
+  } catch (err) {
+    console.error(err);
+    alert("Add question failed");
+  }
+};
+
+const handleUpdateQuestion = async () => {
+  const list = selectedExam?.exam_id ? questions : tempQuestions;
+  const filtered = list.filter(q => q !== selectedQuestion);
+
+if (filtered.some(q => Number(q.question_index) === Number(questionForm.index))) {
+  return alert("Question index already used");
+}
+
+if (
+  exists(
+    filtered.map(q => ({ text: q.question_data?.text })), questionForm.question, "text")
+) {
+  return alert("Question already exists in this exam");
+}
+  if (!selectedExam?.exam_id) {
+    setTempQuestions((prev) =>
+      prev.map((q) =>
+        q === selectedQuestion
+          ? {
+              ...q,
+              question_index: Number(questionForm.index),
+              question_type: questionForm.type,
+              question_data: {
+                text: questionForm.question,
+                answer: questionForm.answer,
+              },
+            }
+          : q
+      )
+    );
+    setSelectedQuestion(null);
+    setView("exam");
+    return;
+  }
+
+  try {
+    await questionsApi.update(selectedQuestion.question_id, {
+      question_index: Number(questionForm.index),
+      question_type: questionForm.type,
+      question_data: {
+        text: questionForm.question,
+        answer: questionForm.answer,
+      },
+    });
+
+    await loadQuestions(selectedExam.exam_id);
+    setSelectedQuestion(null);
+    setView("exam");
+  } catch (err) {
+    console.error(err);
+    alert("Update failed");
+  }
+};
+
+const handleDeleteQuestion = async (q) => {
+  if (!selectedExam?.exam_id) {
+    setTempQuestions((prev) => prev.filter((x) => x !== q));
+    setSelectedQuestion(null);
+    setView("exam");
+    return;
+  }
+  if (!window.confirm("Delete this question?")) return;
+
+  try {
+    await questionsApi.delete(q.question_id);
+    await loadQuestions(selectedExam.exam_id);
+    setSelectedQuestion(null);
+    setView("exam");
+  } catch (err) {
+    console.error(err);
+    alert("Delete failed");
+  }
+};
+
+/* USERS */
+const handleOpenUser = async (user) => {
+  setSelectedUser(user);
+  await loadUserEnrollments(user.user_id);
+};
 
 return (
   <AdminViews
@@ -524,6 +785,8 @@ return (
     setForm={setForm}
     taskForm={taskForm}
     setTaskForm={setTaskForm}
+    questionForm={questionForm}
+    setQuestionForm={setQuestionForm}
 
     courses={courses}
     handleSelectCourse={handleSelectCourse}
@@ -535,19 +798,29 @@ return (
     selectedLecture={selectedLecture}
     selectedTask={selectedTask}
     selectedExam={selectedExam}
+    selectedQuestion={selectedQuestion}
+    selectedUser={selectedUser}
 
     lectures={lectures}
     tasks={tasks}
     exams={exams}
+    questions={questions}
+    users={users}
+    userEnrollments={userEnrollments}
+    allLectures={allLectures} 
     tempLectures={tempLectures}
     tempTasks={tempTasks}
     tempExams={tempExams}
+    tempQuestions={tempQuestions}
 
     setView={setView}
     setSelectedLecture={setSelectedLecture}
     setSelectedTask={setSelectedTask}
     setSelectedExam={setSelectedExam}
     setTempTasks={setTempTasks}
+    setTempQuestions={setTempQuestions}
+    setSelectedQuestion={setSelectedQuestion}
+    setSelectedUser={setSelectedUser}
 
     handleOpenLecture={handleOpenLecture}
     handleAddLecture={handleAddLecture}
@@ -563,6 +836,13 @@ return (
     handleAddExam={handleAddExam}
     handleUpdateExam={handleUpdateExam}
     handleDeleteExam={handleDeleteExam}
+
+    handleOpenQuestion={handleOpenQuestion}
+    handleAddQuestion={handleAddQuestion}
+    handleUpdateQuestion={handleUpdateQuestion}
+    handleDeleteQuestion={handleDeleteQuestion}
+
+    handleOpenUser={handleOpenUser}
   />
 );
 }
