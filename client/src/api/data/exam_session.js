@@ -1,6 +1,7 @@
 import { createCrudApi } from '../crudApi';
+const API_URL = import.meta.env.VITE_BACKEND_URL;
 
-const BASE_URL = 'http://localhost:3001/api/exam-sessions';
+const BASE_URL = `${API_URL}/api/exam-sessions`;
 const crudApi = createCrudApi(BASE_URL);
 
 export const examSessionsApi = {

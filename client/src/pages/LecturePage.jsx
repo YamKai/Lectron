@@ -10,8 +10,9 @@ import { tasksApi } from "../api/data/task";
 import { enrollmentsApi } from "../api/data/enrollment";
 import { useAuth } from "../context/AuthContext";
 import { AFTER_LECTURE_PATH } from "../App";
+const WS_URL = import.meta.env.VITE_WS_URL || "ws://localhost:3001/ws/execute";
 
-const WS_URL = "ws://localhost:3001/ws/execute";
+
 const DEFAULT_CODE = "# Write your code here\n";
 const DB_SAVE_DEBOUNCE_MS = 2000;
 
