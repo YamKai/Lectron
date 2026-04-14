@@ -1,37 +1,33 @@
 import Editor from "@monaco-editor/react";
-import { useState, useEffect } from "react";
+import lectron_theme from "../themes/Lectron.json";
 
-function CodeEditor({ onRun }) {
+/* code editor component
+ Props:
+   code        – current code string
+   onChange    – called with new code string on every edit
+   language    – syntax highlighting language
+   height      – CSS height passed to Monaco
+*/
+let themeRegistered = false;
 
-  const [code, setCode] = useState("");
-
-  useEffect(() => {
-    const saved = localStorage.getItem("lecture-code");
-
-    if (saved) {
-      setCode(saved);
+function CodeEditor({ code, onChange, language = "python", height = "100%" }) {
+  const handleEditorDidMount = (editor, monaco) => {
+    if (!themeRegistered) {
+      monaco.editor.defineTheme("myCustomTheme", lectron_theme);
+      themeRegistered = true;
     }
-  }, []);
 
-  useEffect(() => {
-    localStorage.setItem("lecture-code", code);
-  }, [code]);
+    monaco.editor.setTheme("myCustomTheme");
+  };
 
   return (
-    <div>
-
-      <Editor
-        height="300px"
-        defaultLanguage="javascript"
-        value={code}
-        onChange={(value) => setCode(value || "")}
-      />
-
-      <button onClick={() => onRun(code)}>
-        Run
-      </button>
-
-    </div>
+    <Editor
+      height={height}
+      language={language}
+      value={code}
+      onChange={(val) => onChange(val ?? "")}
+      onMount={handleEditorDidMount}
+    />
   );
 }
 
