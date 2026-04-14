@@ -19,10 +19,14 @@ export default function AdminViews(props) {
   selectedTask,
   selectedExam,
   selectedQuestion,
+  selectedUser,
   lectures,
   tasks,
   exams,
   questions,
+  users,
+  userEnrollments,
+  allLectures,
   tempLectures,
   tempTasks,
   tempExams,
@@ -35,6 +39,7 @@ export default function AdminViews(props) {
   setSelectedQuestion,
   setTempTasks,
   setTempQuestions,
+  setSelectedUser,
 
   handleOpenLecture,
   handleAddLecture,
@@ -56,10 +61,13 @@ export default function AdminViews(props) {
   handleUpdateQuestion,
   handleDeleteQuestion,
 
+  handleOpenUser,
+
 } = props;
 
 
 return (
+<>
 <div style={s.app}>
 <div style={s.layout}>
 
@@ -84,37 +92,73 @@ return (
 ))}
 
 <div style={s.addCard} onClick={handleAddCourse}>
-  <div style={{
-    ...s.cardLeft,
-    justifyContent: "center"
-  }}>
+  <div style={{ ...s.cardLeft, justifyContent: "center" }}>
     <div style={{ color: "#9ca3af" }}>
       + Add Course
     </div>
   </div>
 </div>
+
+<h2 style={{ marginTop: 20 }}>Users</h2>
+
+{users.map((u) => (
+  <div
+    key={u.user_id}
+    style={{
+      display: "flex",
+      alignItems: "center",
+      gap: 10,
+      padding: 10,
+      borderRadius: 10,
+      marginBottom: 8,
+      cursor: "pointer",
+      background: "#0f172a",
+      border: "1px solid #1f2937",
+    }}
+    onClick={() => handleOpenUser(u)}
+  >
+    <img
+      src={u.avatar_url}
+      alt=""
+      style={{
+        width: 36,
+        height: 36,
+        borderRadius: "50%",
+        objectFit: "cover",
+      }}
+    />
+
+    <div style={{ display: "flex", flexDirection: "column" }}>
+      <div style={{ fontSize: 14, fontWeight: 500 }}>
+        {u.user_name || "User"}
+      </div>
+
+      <div style={{ fontSize: 11, color: "#64748b" }}>
+        {u.email}
+      </div>
+    </div>
+  </div>
+))}
 </div>
 
 {/* PANEL */}
 <div style={s.panel}>
 <div style={s.fullForm}>
-  {view === "none" ? (
-    <div
-      style={{
-        height: "100%",
-        minHeight: 400,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        color: "#64748b",
-        fontSize: 16,
-        textAlign: "center",
-      }}
-    >
-      Select or add a course
-    </div>
-  ) : (
-    <>
+
+{view === "none" && (
+  <div style={{
+    height: "100%",
+    minHeight: 400,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    color: "#64748b",
+    fontSize: 16,
+    textAlign: "center",
+  }}>
+    Select or add a course
+  </div>
+)}
 
 {/* COURSE */}
 {view === "course" && (
@@ -435,37 +479,158 @@ placeholder="Exam index" style={s.inputModern}/>
   <div />
   <div style={s.rightActions}>
     {selectedExam ? (
-  <>
-    <button style={s.updateBtn} onClick={handleUpdateExam}>
-      Update
-    </button>
+      <>
+        <button style={s.updateBtn} onClick={handleUpdateExam}>
+          Update
+        </button>
 
-    <button
-      style={s.deleteBtn}
-      onClick={handleDeleteExam}
+        <button
+          style={s.deleteBtn}
+          onClick={handleDeleteExam}
+        >
+          Delete
+        </button>
+      </>
+    ) : (
+      <button style={s.button} onClick={handleAddExam}>
+        +
+      </button>
+    )}
+  </div>
+</div>
+
+</>
+)}  
+ </div>   
+ </div>   
+ </div>   
+  </div>               
+              
+{selectedUser && (
+   <div
+    style={{
+      position: "fixed",
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      background: "rgba(0,0,0,0.7)",
+      display: "flex",
+      justifyContent: "center",
+      alignItems: "center",
+      zIndex: 999,
+    }}
+  >         
+    <div
+      style={{
+        background: "#020617",
+        padding: 20,
+        borderRadius: 12,
+        width: 420,
+      }}
     >
-      Delete
-    </button>
-  </>
-) : (
-  <button style={s.button} onClick={handleAddExam}>
-    +
-  </button>
-)}
-                      </div>
-                    </div>
-                  </>
-                )}
+      <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20 }}>
+        <img
+          src={selectedUser.avatar_url}
+          alt=""
+          style={{
+            width: 50,
+            height: 50,
+            borderRadius: "50%",
+            objectFit: "cover",
+          }}
+        />
+        <div>
+          <div style={{ fontSize: 16, fontWeight: 600 }}>
+            {selectedUser.user_name || "User"}
+          </div>
 
-              </>
-            )}
-
+          <div style={{ fontSize: 12, color: "#94a3b8" }}>
+            {selectedUser.email}
           </div>
         </div>
+      </div>
+      
+    <h4 style={{ marginBottom: 10 }}>Enrollments</h4>
+     {userEnrollments?.map((e) => {
+      const progressCount = Number(e.course_progress ?? 0);
+      const totalLectures = allLectures.filter(
+          (l) => String(l.course_id) === String(e.course_id)).length;
+      const progress =
+      totalLectures > 0 ? Math.round((progressCount / totalLectures) * 100): 0;
 
+      return (
+      <div
+      key={e.course_id}
+      style={{
+        background: "#0f172a",
+        padding: 12,
+        borderRadius: 10,
+        marginBottom: 10,
+      }}
+    >
+      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        {e.course_logo && (
+          <img
+      src={e.course_logo}
+      alt=""
+      style={{
+        width: 30,
+        height: 30,
+        objectFit: "contain",
+      }}
+    />
+  )}
+
+  <div style={{ fontWeight: 500 }}>
+    {e.course_name || "Course"}
+  </div>
+</div>
+
+      <div style={{ fontSize: 12, color: "#94a3b8", marginTop: 4 }}>
+        Progress: {progress}%
+      </div>
+       <div
+        style={{
+          height: 4,                    
+          background: "#1e293b",  
+          borderRadius: 10,
+          marginTop: 8,
+        }}
+      >
+        <div
+          style={{
+            width: `${progress}%`,
+            height: "100%",
+            background: "linear-gradient(90deg, #22c55e 0%, #14b8a6 50%, #3b82f6 100%)",
+            borderRadius: 10,
+            transition: "width 0.4s ease", 
+          }}
+        />
       </div>
     </div>
   );
+})}
+
+      <button
+        style={{
+          marginTop: 10,
+          padding: "8px 16px",
+          borderRadius: 8,
+          background: "#1e293b",
+          color: "#fff",
+          border: "1px solid #334155",
+          cursor: "pointer",
+        }}
+        onClick={() => setSelectedUser(null)}
+      >
+        Close
+      </button>
+    </div>
+  </div>
+)}
+</>
+);
 }
 
   /*  STYLES  */
@@ -506,4 +671,3 @@ placeholder="Exam index" style={s.inputModern}/>
     inputModern: { width:"100%", padding:"10px", background:"#0f172a", color:"#fff", border:"1px solid #1f2937", borderRadius:6 },
     textareaModern: { width:"100%", padding:"10px", background:"#0f172a", color:"#fff", border:"1px solid #1f2937", borderRadius:6, minHeight:120 },
   };
-  

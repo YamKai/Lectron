@@ -4,6 +4,8 @@ import { lecturesApi } from "../api/data/lecture";
 import { tasksApi } from "../api/data/task";
 import { examsApi } from "../api/data/exam";
 import { questionsApi } from "../api/data/question";
+import { usersApi } from "../api/data/user";
+import { enrollmentsApi } from "../api/data/enrollment";
 import AdminViews from "../components/admin-dashboard/AdminView.jsx";
 
 const exists = (list, value, key) => {
@@ -17,17 +19,20 @@ const exists = (list, value, key) => {
 export default function AdminDashboard() {
   const [courses, setCourses] = useState([]);
   const [lectures, setLectures] = useState([]);
+  const [allLectures, setAllLectures] = useState([]);
   const [tasks, setTasks] = useState([]);
   const [tempTasks, setTempTasks] = useState([]);
   const [exams, setExams] = useState([]);
   const [questions, setQuestions] = useState([]);
   const [tempQuestions, setTempQuestions] = useState([]);
+  const [users, setUsers] = useState([]);
 
 const [taskForm, setTaskForm] = useState({ 
   description: "",
   index: "",
   evaluation: "",
 });
+  const [userEnrollments, setUserEnrollments] = useState([]);
   const [tempLectures, setTempLectures] = useState([]);
   const [tempExams, setTempExams] = useState([]);
   const [questionForm, setQuestionForm] = useState({
@@ -42,6 +47,7 @@ const [taskForm, setTaskForm] = useState({
   const [selectedTask, setSelectedTask] = useState(null);
   const [selectedExam, setSelectedExam] = useState(null);
   const [selectedQuestion, setSelectedQuestion] = useState(null);
+  const [selectedUser, setSelectedUser] = useState(null);
 
 const [view, setView] = useState("none");
 
@@ -120,8 +126,59 @@ const loadQuestions = async (examId) => {
   }
 };
 
+const loadUsers = async () => {
+  try {
+    const data = await usersApi.get("all");
+    setUsers(data?.data || data || []);
+  } catch (err) {
+    console.error(err);
+  }
+};
+
+const loadUserEnrollments = async (userId) => {
+  try {
+    const res = await enrollmentsApi.getByUser(userId);
+    const enrollments = res?.data || res || [];
+
+    // 🔥 load all courses
+    const coursesRes = await coursesApi.get("all");
+    const courses = coursesRes?.data || coursesRes || [];
+
+    // 🔥 merge
+    const enriched = enrollments.map((e) => {
+      const course = courses.find(
+        (c) => String(c.course_id) === String(e.course_id)
+      );
+
+      return {
+        ...e,
+        course_name: course?.course_name,
+        course_logo: course?.logo,
+      };
+    });
+
+    setUserEnrollments(enriched);
+  } catch (err) {
+    console.error(err);
+    setUserEnrollments([]);
+  }
+};
+
+const loadAllLectures = async () => {
+  try {
+    const data = await lecturesApi.get("all");
+    const list = data?.data || data || [];
+    setAllLectures(list);
+  } catch (err) {
+    console.error("Error loading lectures:", err);
+    setAllLectures([]);
+  }
+};
+
   useEffect(() => {
     loadCourses();
+    loadAllLectures(); 
+    loadUsers(); 
   }, []);
 
   /* COURSE */
@@ -520,7 +577,7 @@ const handleAddExam = async () => {
     setQuestions([]);       
     setSelectedExam(null);  
 
-    setView("course");
+    setView("course"); 
   } catch (err) {
     console.error(err);
     alert("Add exam failed");
@@ -715,6 +772,11 @@ const handleDeleteQuestion = async (q) => {
   }
 };
 
+/* USERS */
+const handleOpenUser = async (user) => {
+  setSelectedUser(user);
+  await loadUserEnrollments(user.user_id);
+};
 
 return (
   <AdminViews
@@ -737,11 +799,15 @@ return (
     selectedTask={selectedTask}
     selectedExam={selectedExam}
     selectedQuestion={selectedQuestion}
+    selectedUser={selectedUser}
 
     lectures={lectures}
     tasks={tasks}
     exams={exams}
     questions={questions}
+    users={users}
+    userEnrollments={userEnrollments}
+    allLectures={allLectures} 
     tempLectures={tempLectures}
     tempTasks={tempTasks}
     tempExams={tempExams}
@@ -754,6 +820,7 @@ return (
     setTempTasks={setTempTasks}
     setTempQuestions={setTempQuestions}
     setSelectedQuestion={setSelectedQuestion}
+    setSelectedUser={setSelectedUser}
 
     handleOpenLecture={handleOpenLecture}
     handleAddLecture={handleAddLecture}
@@ -774,6 +841,8 @@ return (
     handleAddQuestion={handleAddQuestion}
     handleUpdateQuestion={handleUpdateQuestion}
     handleDeleteQuestion={handleDeleteQuestion}
+
+    handleOpenUser={handleOpenUser}
   />
 );
 }
