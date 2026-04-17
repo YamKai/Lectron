@@ -75,7 +75,7 @@ const styles = {
     backgroundColor: "#10111A",
     color: "white",
     boxShadow: "0 2px 10px rgba(0,0,0,0.2)",
-    position: "sticky",
+    position: "fixed",
     top: 0,
     zIndex: 1000,
     boxSizing: "border-box",
