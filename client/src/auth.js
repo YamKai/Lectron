@@ -2,7 +2,10 @@ import { supabase } from "../supabaseClient";
 
 export const signInWithGoogle = async () => {
     return supabase.auth.signInWithOAuth({
-        provider: 'google'
+        provider: 'google',
+        options: {
+            redirectTo: `https://lectron.online/auth/v1/callback`
+        }
     });
 };
 
