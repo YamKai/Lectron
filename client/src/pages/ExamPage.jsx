@@ -395,7 +395,7 @@ return (
     }}
   >
       {/* Header */}
-      <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+      <div style={{       paddingTop: "32px",  display: "flex", alignItems: "center", gap: "12px" }}>
         <button onClick={() => navigate(AFTER_LECTURE_PATH)} style={{ padding: "3px 10px", fontSize: "0.82em" }}>
           ← Back
         </button>
