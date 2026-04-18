@@ -175,7 +175,7 @@ const [openMenu, setOpenMenu] = useState(false);
     const percentage =
       totalLectures > 0 ? (progress / totalLectures) * 100 : 0;
 
-    const isCompleted = progress >= totalLectures;
+    const isCompleted = progress >= 100;
     return (
       <div style={app}>
         <div style={container}>
@@ -198,7 +198,7 @@ const [openMenu, setOpenMenu] = useState(false);
           </div>
 
           <div style={bigBar}>
-            <div style={{ ...bigFill, width: `${percentage}%` }} />
+            <div style={isCompleted ? { ...bigFillCompleted, width: `${percentage}%` } : { ...bigFill, width: `${percentage}%` }} />
           </div>
           
 
@@ -476,6 +476,14 @@ const bigFill = {
   borderRadius: 999,
   background: "linear-gradient(90deg,#3b1a8a,#5b21b6,#8b5cf6)",
   boxShadow: "0 0 10px rgba(139,92,246,0.45)",
+  transition: "width 0.4s ease",
+};
+
+const bigFillCompleted = {
+  height: 8,
+  borderRadius: 999,
+  background: "linear-gradient(90deg,#3ea637,#60ff54,#91ff8a)",
+  boxShadow: "0 0 10px rgba(97, 246, 92, 0.45)",
   transition: "width 0.4s ease",
 };
 
