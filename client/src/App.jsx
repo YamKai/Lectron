@@ -15,7 +15,24 @@ export const AFTER_LECTURE_PATH = "/app";
 function App() {
   const { authUser, dbUser, loading } = useAuth();
 
-  if (loading) return <div>Loading...</div>;
+  if (loading) {
+    return (
+      <div
+        style={{
+          height: "100vh",
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+        }}
+      >
+        <img
+          src="/loading.gif"
+          alt="Loading..."
+          style={{ width: 120 }}
+        />
+      </div>
+    );
+  }
 
   return (
     <BrowserRouter>
