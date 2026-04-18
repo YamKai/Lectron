@@ -387,7 +387,7 @@ return (
         radial-gradient(circle at 50% 80%, rgba(147,51,234,0.12) 0%, transparent 60%),
         #01020d
       `,
-      padding: "54px 48px",
+      padding: "64px 48px",
       boxSizing: "border-box",
       display: "flex",
       flexDirection: "column",
