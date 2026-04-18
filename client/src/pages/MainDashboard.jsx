@@ -193,7 +193,7 @@ const [openMenu, setOpenMenu] = useState(false);
               <p style={desc}>{selectedCourse.course_description}</p>
 
               <div style={statsRow}>
-                <div>{totalLectures} lessons</div>
+                <div>{totalLectures - exams.filter((e) => String(e.course_id) === String(selectedCourse.course_id)).length} lessons</div>
                 <div>{Math.round(percentage)}% completed</div>
               </div>
             </div>
