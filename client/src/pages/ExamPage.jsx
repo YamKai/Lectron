@@ -329,7 +329,7 @@ return (
       gap: "28px",
     }}
   >
-        <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+        <div style={{ paddingTop: "32px", display: "flex", alignItems: "center", gap: "16px" }}>
           <h2 style={{ margin: 0 }}>{exam.exam_name} — Results</h2>
           {displayResults && (
             <span style={{
