@@ -27,7 +27,6 @@ function App() {
       >
         <img
           src="/loading.gif"
-          alt="Loading..."
           style={{ width: 120 }}
         />
       </div>
