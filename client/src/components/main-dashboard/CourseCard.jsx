@@ -13,7 +13,10 @@ export default function CourseCard({
 })
 {
   const [hovered, setHovered] = useState(false);
-  const completed = isCompleted || progress >= 100; 
+  const completed =
+  typeof isCompleted === "boolean"
+    ? isCompleted
+    : progress >= totalLessons;
   const handleHover = (e, enter) => {
     setHovered(enter);
 
@@ -247,4 +250,11 @@ const titleText = {
   background: "linear-gradient(90deg,#ffffff,#c7d2fe)",
   WebkitBackgroundClip: "text",
   WebkitTextFillColor: "transparent",
+};
+
+const completedBtn = {
+  ...baseBtn,
+  background: "rgba(34,197,94,0.15)",
+  border: "1px solid rgba(34,197,94,0.35)",
+  color: "#4ade80",
 };
