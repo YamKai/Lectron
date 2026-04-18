@@ -5,7 +5,7 @@ function Layout() {
   return (
     <>
       <NavBar />
-      <Outlet />
+      <Outlet style={{ paddingTop: "52px" }} />
     </>
   );
 }
