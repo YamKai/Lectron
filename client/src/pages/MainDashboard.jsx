@@ -175,6 +175,7 @@ const [openMenu, setOpenMenu] = useState(false);
     const percentage =
       totalLectures > 0 ? (progress / totalLectures) * 100 : 0;
 
+    const isCompleted = progress >= totalLectures;
     return (
       <div style={app}>
         <div style={container}>
@@ -285,6 +286,7 @@ if (view === "myCourses") {
                   onContinue={() => handleLoadLecture(course)}
                   onCardClick={handleCardClick}
                   totalLessons={totalLectures}
+                  isCompleted={progress >= totalLectures}
                 />
               );
             })}

@@ -9,10 +9,11 @@ export default function CourseCard({
   onContinue,
   onCardClick,
   totalLessons,
+  isCompleted,
 })
 {
   const [hovered, setHovered] = useState(false);
-
+  const completed = isCompleted || progress >= 100; 
   const handleHover = (e, enter) => {
     setHovered(enter);
 
@@ -84,19 +85,31 @@ export default function CourseCard({
           </button>
         )}
 
-        {enrolled && (
-          <button
-            style={progress > 0 ? continueBtn : startBtn}
-            onClick={(e) => {
-              e.stopPropagation();
-              progress > 0 ? onContinue(course) : onStart(course);
-            }}
-      onMouseEnter={(e) => handleHover(e, true)}
-      onMouseLeave={(e) => handleHover(e, false)}
-          >
-            {progress > 0 ? "Resume Learning" : "Start Course"}
-          </button>
-        )}
+        {enrolled && !completed && (
+  <button
+    style={progress > 0 ? continueBtn : startBtn}
+    onClick={(e) => {
+      e.stopPropagation();
+      progress > 0 ? onContinue(course) : onStart(course);
+    }}
+    onMouseEnter={(e) => handleHover(e, true)}
+    onMouseLeave={(e) => handleHover(e, false)}
+  >
+    {progress > 0 ? "Resume Learning" : "Start Course"}
+  </button>
+)}
+
+{enrolled && completed && (
+  <button
+    style={completedBtn}
+    onClick={(e) => {
+      e.stopPropagation();
+      onCardClick(course);
+    }}
+  >
+    Review Course
+  </button>
+)}
       </div>
     </div>
   );
