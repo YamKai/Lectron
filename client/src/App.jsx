@@ -27,7 +27,7 @@ function App() {
       >
         <img
           src="/loading.gif"
-          style={{ width: 120 }}
+          style={{ width: 220, opacity: 0.3 }}
         />
       </div>
     );
