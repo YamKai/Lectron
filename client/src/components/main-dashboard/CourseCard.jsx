@@ -109,6 +109,8 @@ export default function CourseCard({
       e.stopPropagation();
       onCardClick(course);
     }}
+    onMouseEnter={(e) => handleHover(e, true)}
+    onMouseLeave={(e) => handleHover(e, false)}
   >
     Review Course
   </button>
