@@ -170,6 +170,8 @@ const [openMenu, setOpenMenu] = useState(false);
 
     const totalLectures = lectures.filter(
       (l) => String(l.course_id) === String(selectedCourse.course_id)
+    ).length + exams.filter(
+      (e) => String(e.course_id) === String(selectedCourse.course_id)
     ).length;
 
     const percentage =
