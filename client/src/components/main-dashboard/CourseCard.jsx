@@ -62,7 +62,7 @@ export default function CourseCard({
           {enrolled && (
             <div style={progressWrap}>
               <span style={progressHeader}>
-                <span style={progressPercent}>{progress}%</span>
+                <span style={ completed ? {progressPercent} : {progressPercentCompleted}}>{progress}%</span>
               </span>
 
               <div style={bar}>
@@ -189,6 +189,11 @@ const progressHeader = {
 
 const progressPercent = {
   color: "#a78bfa",
+  fontWeight: 600,
+};
+
+const progressPercentCompleted = {
+  color: "#4ade80",
   fontWeight: 600,
 };
 
