@@ -16,7 +16,7 @@ export default function CourseCard({
   const completed =
   typeof isCompleted === "boolean"
     ? isCompleted
-    : progress >= totalLessons;
+    : progress >= 100;
   const handleHover = (e, enter) => {
     setHovered(enter);
 

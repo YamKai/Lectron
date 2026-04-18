@@ -286,7 +286,7 @@ if (view === "myCourses") {
                   onContinue={() => handleLoadLecture(course)}
                   onCardClick={handleCardClick}
                   totalLessons={totalLectures}
-                  isCompleted={progress >= totalLectures}
+                  isCompleted={progress >= 100}
                 />
               );
             })}
