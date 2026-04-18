@@ -534,7 +534,7 @@ return (
       <div ref={rightPanelRef} className="lecture-right">
 
         <div style={{ flex: terminalCollapsed ? 1 : editorPct, minHeight: 0, overflow: "hidden" }}>
-          <CodeEditor code={code} onChange={setCode} language={editorLanguage} height="100%" />
+          <CodeEditor code={code} onChange={setCode} language={editorLanguage} height="90%" />
         </div>
 
         {/* ── Editor / Terminal divider ── */}
