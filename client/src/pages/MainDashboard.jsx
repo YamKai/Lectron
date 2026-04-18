@@ -382,6 +382,8 @@ return (
           const totalLectures = lectures.filter(
             (l) =>
               String(l.course_id) === String(course.course_id)
+          ).length + exams.filter(
+            (e) => String(e.course_id) === String(course.course_id)
           ).length;
 
           const percentage =
