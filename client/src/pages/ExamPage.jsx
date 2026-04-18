@@ -144,7 +144,7 @@ function ExamPage() {
         const enrollments = await enrollmentsApi.getByUser(dbUser.user_id);
         const enrollment = enrollments.find((e) => e.course_id === examData.course_id);
 
-        if (!enrollment || enrollment.course_progress + 1 < examData.exam_index) {
+        if (!enrollment || enrollment.course_progress < examData.exam_index) {
           navigate(AFTER_LECTURE_PATH, { replace: true });
           return;
         }
