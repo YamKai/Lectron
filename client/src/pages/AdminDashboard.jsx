@@ -779,8 +779,8 @@ const handleOpenUser = async (user) => {
 };
 
 return (
+  <div style={{ paddingTop: "30px" }}>
   <AdminViews
-    style={{ paddingTop: "30px" }}
     view={view}
     form={form}
     setForm={setForm}
@@ -845,5 +845,6 @@ return (
 
     handleOpenUser={handleOpenUser}
   />
+  </div>
 );
 }
