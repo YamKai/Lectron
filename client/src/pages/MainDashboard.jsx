@@ -193,7 +193,7 @@ const [openMenu, setOpenMenu] = useState(false);
               <p style={desc}>{selectedCourse.course_description}</p>
 
               <div style={statsRow}>
-                <div>{totalLectures - exams.filter((e) => String(e.course_id) === String(selectedCourse.course_id)).length} lessons</div>
+                <div>{totalLectures - exams.filter((e) => String(e.course_id) === String(selectedCourse.course_id)).length} Lectures</div>
                 <div>{Math.round(percentage)}% completed</div>
               </div>
             </div>
@@ -287,7 +287,7 @@ if (view === "myCourses") {
                   onStart={() => handleLoadLecture(course)}
                   onContinue={() => handleLoadLecture(course)}
                   onCardClick={handleCardClick}
-                  totalLessons={totalLectures}
+                  totalLessons={totalLectures - exams.filter((e) => String(e.course_id) === String(selectedCourse.course_id)).length}
                   isCompleted={progress >= 100}
                 />
               );
