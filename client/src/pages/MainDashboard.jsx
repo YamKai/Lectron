@@ -378,7 +378,9 @@ return (
         ].map((course) => {
           
           const progress = getProgress(course.course_id);
-
+          const onlyLectures = lectures.filter(
+            (l) => String(l.course_id) === String(course.course_id)
+          ).length;
           const totalLectures = lectures.filter(
             (l) =>
               String(l.course_id) === String(course.course_id)
@@ -401,7 +403,7 @@ return (
               onStart={() => handleLoadLecture(course)}
               onContinue={() => handleLoadLecture(course)}
               onCardClick={handleCardClick}
-              totalLessons={totalLectures - exams.filter((e) => String(e.course_id) === String(selectedCourse.course_id)).length}
+              totalLessons={onlyLectures}
             />
           );
         })}
