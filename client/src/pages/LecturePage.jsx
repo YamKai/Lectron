@@ -418,7 +418,7 @@ return (
     ref={containerRef}
     className="lecture-container"
     style={{
-      paddingTop: "100px",
+      paddingTop: "60px",
       minHeight: "100vh",
       width: "100%",
       background: `
