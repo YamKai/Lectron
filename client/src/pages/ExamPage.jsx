@@ -379,6 +379,7 @@ return (
  return (
   <div
     style={{
+      paddingTop: "30px",
       minHeight: "100vh",
       width: "100%",
       background: `
