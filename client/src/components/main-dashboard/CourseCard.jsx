@@ -66,7 +66,7 @@ export default function CourseCard({
               </span>
 
               <div style={bar}>
-                <div style={ isCompleted ? { ...fillCompleted, width: `${progress}%` } : { ...fill, width: `${progress}%` }} />
+                <div style={ completed ? { ...fillCompleted, width: `${progress}%` } : { ...fill, width: `${progress}%` }} />
               </div>
             </div>
           )}
