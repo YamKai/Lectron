@@ -418,6 +418,7 @@ return (
     ref={containerRef}
     className="lecture-container"
     style={{
+      paddingTop: "100px",
       minHeight: "100vh",
       width: "100%",
       background: `
@@ -533,7 +534,7 @@ return (
       {/* -- RIGHT PANEL ------------------------------------------ */}
       <div ref={rightPanelRef} className="lecture-right">
 
-        <div style={{ flex: terminalCollapsed ? 1 : editorPct, minHeight: 0, overflow: "hidden", paddingTop: "52px" }}>
+        <div style={{ flex: terminalCollapsed ? 1 : editorPct, minHeight: 0, overflow: "hidden" }}>
           <CodeEditor code={code} onChange={setCode} language={editorLanguage} height="100%" />
         </div>
 

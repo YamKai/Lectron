@@ -66,7 +66,7 @@ export default function CourseCard({
               </span>
 
               <div style={bar}>
-                <div style={{ ...fill, width: `${progress}%` }} />
+                <div style={ isCompleted ? { ...fillCompleted, width: `${progress}%` } : { ...fill, width: `${progress}%` }} />
               </div>
             </div>
           )}
@@ -204,6 +204,13 @@ const fill = {
   borderRadius: 999,
   background: "linear-gradient(90deg,#4c1d95,#7c3aed,#a78bfa)",
   boxShadow: "0 0 8px rgba(139,92,246,0.4)",
+};
+
+const fillCompleted = {
+  height: 6,
+  borderRadius: 999,
+  background: "linear-gradient(90deg,#3ea637,#60ff54,#91ff8a)",
+  boxShadow: "0 0 8px rgba(97, 246, 92, 0.4)",
 };
 
 const buttonGroup = {
