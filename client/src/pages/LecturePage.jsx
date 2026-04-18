@@ -533,7 +533,7 @@ return (
       {/* -- RIGHT PANEL ------------------------------------------ */}
       <div ref={rightPanelRef} className="lecture-right">
 
-        <div style={{ flex: terminalCollapsed ? 1 : editorPct, minHeight: 0, overflow: "hidden" }}>
+        <div style={{ flex: terminalCollapsed ? 1 : editorPct, minHeight: 0, overflow: "hidden", paddingTop: "52px" }}>
           <CodeEditor code={code} onChange={setCode} language={editorLanguage} height="100%" />
         </div>
 
