@@ -62,7 +62,7 @@ export default function CourseCard({
           {enrolled && (
             <div style={progressWrap}>
               <span style={progressHeader}>
-                <span style={ completed ? progressPercent : progressPercentCompleted}>{progress}%</span>
+                <span style={ completed ? progressPercentCompleted : progressPercent}>{progress}%</span>
               </span>
 
               <div style={bar}>
