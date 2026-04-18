@@ -56,7 +56,7 @@ export default function CourseCard({
           <p style={desc}>{course.course_description}</p>
 
           <div style={metaRow}>
-            <span>{totalLessons} lessons</span>
+            <span>{totalLessons} Lectures</span>
           </div>
 
           {enrolled && (
@@ -109,8 +109,7 @@ export default function CourseCard({
       e.stopPropagation();
       onCardClick(course);
     }}
-    onMouseEnter={(e) => handleHover(e, true)}
-    onMouseLeave={(e) => handleHover(e, false)}
+    
   >
     Review Course
   </button>

@@ -401,7 +401,7 @@ return (
               onStart={() => handleLoadLecture(course)}
               onContinue={() => handleLoadLecture(course)}
               onCardClick={handleCardClick}
-              totalLessons={totalLectures}
+              totalLessons={totalLectures - exams.filter((e) => String(e.course_id) === String(selectedCourse.course_id)).length}
             />
           );
         })}
