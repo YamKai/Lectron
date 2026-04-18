@@ -175,7 +175,7 @@ const [openMenu, setOpenMenu] = useState(false);
     const percentage =
       totalLectures > 0 ? (progress / totalLectures) * 100 : 0;
 
-    const isCompleted = progress >= 100;
+    const isCourseCompleted = progress >= 100;
     return (
       <div style={app}>
         <div style={container}>
@@ -198,7 +198,7 @@ const [openMenu, setOpenMenu] = useState(false);
           </div>
 
           <div style={bigBar}>
-            <div style={isCompleted ? { ...bigFillCompleted, width: `${percentage}%` } : { ...bigFill, width: `${percentage}%` }} />
+            <div style={isCourseCompleted ? { ...bigFillCompleted, width: `${percentage}%` } : { ...bigFill, width: `${percentage}%` }} />
           </div>
           
 
