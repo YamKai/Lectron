@@ -131,7 +131,7 @@ const [openMenu, setOpenMenu] = useState(false);
 
     const nextItem = merged.find((item) => {
       const index = item.lecture_index ?? item.exam_index;
-      return index === progress + 1;
+      return index === progress;
     });
 
     if (!nextItem) return;
@@ -211,9 +211,9 @@ const [openMenu, setOpenMenu] = useState(false);
               const index = item.lecture_index ?? item.exam_index;
 
               const isCompleted = index <= progress;
-              const isCurrent = index === progress + 1;
+              const isCurrent = index === progress;
 
-              const canOpen = index <= progress + 1;
+              const canOpen = index <= progress;
 
               return (
                 <div
